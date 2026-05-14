@@ -128,32 +128,41 @@ Provider passthrough goes under `provider.options.<slug>` and is only forwarded 
 
 Options keyed by provider slug are forwarded only when that provider matches; other keys are ignored. Check each provider's upstream docs for available passthrough keys.
 
-## Python (fetch)
+## Python (urllib)
 
 ```python
-import fs from "fs";
+import base64
+import json
+import os
+from urllib import request, error
 
-const audio = await fs.promises.readFile("audio.wav");
-const data = audio.toString("base64");
+with open("audio.wav", "rb") as f:
+    audio = f.read()
 
-const res = await fetch("https://openrouter.ai/api/v1/audio/transcriptions", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    model: "google/chirp-3",
-    input_audio: { data, format: "wav" },
-  }),
-});
+payload = json.dumps(
+    {
+        "model": "google/chirp-3",
+        "input_audio": {"data": base64.b64encode(audio).decode("ascii"), "format": "wav"},
+    }
+).encode("utf-8")
 
-if (!res.ok) {
-  throw new Error(`STT failed (HTTP ${res.status}): ${await res.text()}`);
-}
+req = request.Request(
+    "https://openrouter.ai/api/v1/audio/transcriptions",
+    data=payload,
+    headers={
+        "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    method="POST",
+)
 
-const result = await res.json();
-console.log(result.text);
+try:
+    with request.urlopen(req) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    print(result.get("text", ""))
+except error.HTTPError as e:
+    body = e.read().decode("utf-8", errors="replace")
+    raise RuntimeError(f"STT failed (HTTP {e.code}): {body}")
 ```
 
 ## Python (requests)

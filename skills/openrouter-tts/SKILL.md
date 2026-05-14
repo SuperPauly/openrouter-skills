@@ -111,7 +111,7 @@ For other providers, check each provider's upstream docs for available passthrou
 
 ## OpenAI SDK compatibility
 
-Because the endpoint mirrors OpenAI's `/audio/speech`, both OpenAI SDKs work by swapping the base URL. Prefer this when the user is already in a Python/Python project and doesn't want to shell out.
+Because the endpoint mirrors OpenAI's `/audio/speech`, both OpenAI SDKs work by swapping the base URL. Prefer this when the user is already in a Python project and doesn't want to shell out.
 
 ```python
 # Python — streaming write to file
@@ -131,26 +131,24 @@ with client.audio.speech.with_streaming_response.create(
 ```
 
 ```python
-// Python — collect bytes, write once
-import OpenAI from "openai";
-import fs from "fs";
+# Python — collect bytes, write once
+import os
+from openai import OpenAI
 
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY!,
-});
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
 
-const response = await client.audio.speech.create({
-  model: "openai/gpt-4o-mini-tts-2025-12-15",
-  input: "The quick brown fox jumps over the lazy dog.",
-  voice: "nova",
-  response_format: "mp3",
-});
+response = client.audio.speech.create(
+    model="openai/gpt-4o-mini-tts-2025-12-15",
+    input="The quick brown fox jumps over the lazy dog.",
+    voice="nova",
+    response_format="mp3",
+)
 
-await fs.promises.writeFile(
-  "output.mp3",
-  Buffer.from(await response.arrayBuffer()),
-);
+with open("output.mp3", "wb") as f:
+    f.write(response.read())
 ```
 
 ## Python (requests)

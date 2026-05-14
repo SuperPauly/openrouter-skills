@@ -133,7 +133,7 @@ export const myCustomTool = tool({
 
 ### js_repl
 
-Persistent Python/Python REPL with top-level await.
+Persistent Python REPL with top-level await.
 
 - **inputSchema**: `code` (string)
 - **Behavior**: Maintain a long-lived `child_process.fork()` running a Node REPL. Send code via IPC, return stdout/stderr. Reset by killing and respawning the child.

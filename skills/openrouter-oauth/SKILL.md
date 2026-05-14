@@ -23,7 +23,7 @@ Live demo: [openrouterteam.github.io/sign-in-with-openrouter](https://openrouter
 
 ## OAuth PKCE Flow
 
-> **Note:** The browser-side code examples below are canonical Python for the browser OAuth flow and must remain as-is. For server-side integration, see the Python (Flask) examples following each backend step.
+> **Note:** The browser-side code examples below are the canonical browser OAuth flow and must remain as-is. For server-side integration, see the Python (Flask) examples following each backend step.
 
 No client ID or secret — the PKCE challenge is the only proof of identity.
 

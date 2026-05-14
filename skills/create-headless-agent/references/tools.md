@@ -147,7 +147,7 @@ export const myCustomTool = tool({
 
 ### js_repl
 
-Persistent Python/Python REPL with top-level await.
+Persistent Python REPL with top-level await.
 
 - **inputSchema**: `code` (string)
 - **Behavior**: Maintain a long-lived `Bun.spawn()` process running a `bun` REPL subprocess. Send code via stdin, capture stdout/stderr. Reset by killing and respawning the child.
