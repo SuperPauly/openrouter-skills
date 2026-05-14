@@ -153,6 +153,74 @@ await fs.promises.writeFile(
 );
 ```
 
+## Python (requests)
+
+Drop-in script — reads text from argument or stdin, writes audio bytes to stdout or a file.
+
+```python
+#!/usr/bin/env python3
+"""OpenRouter TTS drop-in: python tts.py "Hello world" > output.mp3"""
+import argparse
+import sys
+import requests
+import os
+
+BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def synthesize(text: str, model: str, voice: str, api_key: str) -> bytes:
+    resp = requests.post(
+        f"{BASE_URL}/audio/speech",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={"model": model, "input": text, "voice": voice},
+    )
+    resp.raise_for_status()
+    return resp.content
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Text-to-speech via OpenRouter")
+    parser.add_argument("text", nargs="?", help="Text to synthesize (or read from stdin)")
+    parser.add_argument("--model", default="openai/tts-1", help="TTS model slug")
+    parser.add_argument("--voice", default="alloy", help="Voice name")
+    parser.add_argument("-o", "--output", help="Output file (default: stdout)")
+    parser.add_argument("--api-key", help="OpenRouter API key (or set OPENROUTER_API_KEY)")
+    args = parser.parse_args()
+
+    api_key = args.api_key or os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY not set", file=sys.stderr)
+        sys.exit(1)
+
+    text = args.text
+    if not text:
+        if sys.stdin.isatty():
+            parser.print_help()
+            sys.exit(1)
+        text = sys.stdin.read().strip()
+
+    audio = synthesize(text, args.model, args.voice, api_key)
+
+    if args.output:
+        with open(args.output, "wb") as f:
+            f.write(audio)
+        print(f"Saved to {args.output}", file=sys.stderr)
+    else:
+        sys.stdout.buffer.write(audio)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Usage:
+```bash
+python tts.py "Hello, world!" > output.mp3
+python tts.py "Hello" --voice nova --output speech.mp3
+echo "Hello world" | python tts.py > output.mp3
+OPENROUTER_API_KEY=sk-or-... python tts.py "Test" -o test.mp3
+```
+
 ## Long inputs
 
 TTS models have per-request character limits (usually a few thousand characters) and are priced **per character of input**, so there's no penalty to splitting. For anything long (chapters, articles, scripts):

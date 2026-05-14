@@ -201,6 +201,65 @@ const text = await result.getText();
 
 The only changes are the three import lines at the top.
 
+### Python equivalent
+
+```python
+# Python equivalent using requests
+import requests
+import json
+import os
+
+BASE_URL = "https://openrouter.ai/api/v1"
+HEADERS = {"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}", "Content-Type": "application/json"}
+
+def execute_tool(name: str, args: dict) -> dict:
+    if name == "web_search":
+        return {"results": ["Result 1", "Result 2"]}
+    if name == "finish":
+        return args
+    return {}
+
+input_items = [{"role": "user", "content": "What are the latest AI developments?"}]
+previous_id = None
+accumulated_text = ""
+
+for _ in range(10):
+    payload = {
+        "model": "openai/gpt-5-nano",
+        "instructions": "You are a research assistant.",
+        "input": input_items,
+        "tools": [
+            {"type": "function", "name": "web_search", "description": "Search the web",
+             "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
+            {"type": "function", "name": "finish", "description": "Complete the task",
+             "parameters": {"type": "object", "properties": {"answer": {"type": "string"}}, "required": ["answer"]}},
+        ],
+    }
+    if previous_id:
+        payload["previous_response_id"] = previous_id
+    resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json=payload)
+    resp.raise_for_status()
+    data = resp.json()
+    previous_id = data["id"]
+    tool_calls = []
+    for item in data.get("output", []):
+        if item.get("type") == "message":
+            for part in item.get("content", []):
+                if part.get("type") == "output_text":
+                    accumulated_text += part["text"]
+        elif item.get("type") == "function_call":
+            tool_calls.append(item)
+    if not tool_calls or any(tc["name"] == "finish" for tc in tool_calls):
+        break
+    input_items = []
+    for tc in tool_calls:
+        args = json.loads(tc["arguments"])
+        result = execute_tool(tc["name"], args)
+        input_items.append({"type": "function_call_output", "call_id": tc["call_id"], "output": json.dumps(result)})
+
+print(accumulated_text)
+```
+
 ---
 
 ## When to Keep @openrouter/sdk

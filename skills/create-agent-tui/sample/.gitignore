@@ -1,5 +1,8 @@
-node_modules/
-dist/
+__pycache__/
+*.py[cod]
 .sessions/
 .env
-pnpm-lock.yaml
+.venv/
+*.egg-info/
+dist/
+build/

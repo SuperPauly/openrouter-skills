@@ -158,30 +158,88 @@ console.log(result.text);
 
 ## Python (requests)
 
+Drop-in script — reads audio from a file path argument or stdin, prints transcript to stdout, prints cost info to stderr.
+
 ```python
-import base64
-import os
+#!/usr/bin/env python3
+"""OpenRouter STT drop-in: python stt.py <audio_file> [--model <model>]"""
+import argparse
+import json
+import sys
 import requests
 
-with open("audio.wav", "rb") as f:
-    data = base64.b64encode(f.read()).decode("utf-8")
+BASE_URL = "https://openrouter.ai/api/v1"
 
-res = requests.post(
-    "https://openrouter.ai/api/v1/audio/transcriptions",
-    headers={
-        "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
-        "Content-Type": "application/json",
-    },
-    json={
-        "model": "google/chirp-3",
-        "input_audio": {"data": data, "format": "wav"},
-    },
-)
 
-if not res.ok:
-    raise RuntimeError(f"STT failed (HTTP {res.status_code}): {res.text}")
+def transcribe(audio_path: str, model: str, api_key: str) -> dict:
+    with open(audio_path, "rb") as f:
+        audio_bytes = f.read()
 
-print(res.json()["text"])
+    import base64
+    audio_b64 = base64.b64encode(audio_bytes).decode()
+    ext = audio_path.rsplit(".", 1)[-1].lower()
+    mime = {
+        "mp3": "audio/mpeg", "wav": "audio/wav", "ogg": "audio/ogg",
+        "flac": "audio/flac", "m4a": "audio/mp4", "webm": "audio/webm",
+    }.get(ext, "audio/mpeg")
+
+    resp = requests.post(
+        f"{BASE_URL}/responses",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={
+            "model": model,
+            "input": [{
+                "role": "user",
+                "content": [
+                    {"type": "input_audio", "data": audio_b64, "mime_type": mime},
+                    {"type": "input_text", "text": "Transcribe the audio. Return only the transcript text, nothing else."},
+                ],
+            }],
+        },
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Transcribe audio via OpenRouter STT")
+    parser.add_argument("audio_file", help="Path to audio file")
+    parser.add_argument("--model", default="openai/whisper-large-v3", help="STT model slug")
+    parser.add_argument("--api-key", help="OpenRouter API key (or set OPENROUTER_API_KEY)")
+    args = parser.parse_args()
+
+    import os
+    api_key = args.api_key or os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY not set", file=sys.stderr)
+        sys.exit(1)
+
+    data = transcribe(args.audio_file, args.model, api_key)
+
+    transcript = ""
+    for item in data.get("output", []):
+        if item.get("type") == "message":
+            for part in item.get("content", []):
+                if part.get("type") == "output_text":
+                    transcript += part["text"]
+
+    print(transcript)
+
+    usage = data.get("usage", {})
+    in_t = usage.get("input_tokens", 0)
+    out_t = usage.get("output_tokens", 0)
+    print(f"[tokens: {in_t} in / {out_t} out]", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Usage:
+```bash
+python stt.py recording.mp3
+python stt.py recording.wav --model openai/whisper-large-v3
+OPENROUTER_API_KEY=sk-or-... python stt.py audio.flac
 ```
 
 ## Troubleshooting
