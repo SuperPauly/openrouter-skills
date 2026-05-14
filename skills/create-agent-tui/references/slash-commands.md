@@ -6,7 +6,7 @@ A command registry pattern for handling `/command` input in the REPL. The skill 
 
 ## src/commands.ts
 
-```typescript
+```python
 import type { Interface } from 'readline';
 import type { AgentConfig } from './config.js';
 import type { ChatMessage } from './agent.js';
@@ -62,7 +62,7 @@ export async function dispatch(input: string, ctx: CommandContext): Promise<bool
 
 Move the existing `selectModel` logic into the registry:
 
-```typescript
+```python
 import { registerCommand } from './commands.js';
 
 function ask(rl: Interface, prompt: string): Promise<string> {
@@ -98,7 +98,7 @@ registerCommand({
 
 ### /new
 
-```typescript
+```python
 registerCommand({
   name: '/new',
   description: 'Start a fresh conversation',
@@ -112,7 +112,7 @@ registerCommand({
 
 ### /help
 
-```typescript
+```python
 registerCommand({
   name: '/help',
   description: 'List available commands',
@@ -132,7 +132,7 @@ registerCommand({
 
 Requires the Context Compaction module (`src/compaction.ts`).
 
-```typescript
+```python
 import { compactMessages } from './compaction.js';
 import { OpenRouter } from '@openrouter/agent';
 
@@ -156,7 +156,7 @@ registerCommand({
 
 ### /session
 
-```typescript
+```python
 registerCommand({
   name: '/session',
   description: 'Show session info and token usage',
@@ -171,7 +171,7 @@ registerCommand({
 
 ### /export
 
-```typescript
+```python
 import { writeFileSync } from 'fs';
 
 registerCommand({
@@ -194,7 +194,7 @@ registerCommand({
 
 Replace inline `/model` handling with the registry:
 
-```typescript
+```python
 import { dispatch, type CommandContext } from './commands.js';
 import './commands-init.js'; // registers selected commands (side-effect import)
 
@@ -222,7 +222,7 @@ cmdCtx.totalTokens.output += result.usage?.outputTokens ?? 0;
 
 The agent generates a `src/commands-init.ts` file that imports and registers only the commands the user selected. For default-ON commands:
 
-```typescript
+```python
 import './commands.js';
 // Registers: /model, /new, /help
 ```

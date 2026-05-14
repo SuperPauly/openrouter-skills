@@ -59,9 +59,9 @@ Skills are contextual and auto-loaded based on your conversation. When a request
 
 | Skill | Useful for |
 |-------|------------|
-| [create-agent-tui](skills/create-agent-tui/README.md) | Scaffolds a complete agent TUI in TypeScript — like `create-react-app` for terminal agents. Customizable input styles, tool display modes, ASCII banners, loaders, session persistence, and [14 built-in tools](skills/create-agent-tui/README.md) |
-| [create-headless-agent](skills/create-headless-agent/README.md) | Scaffolds a headless agent in TypeScript + Bun — for CLI tools, API servers, queue workers, and pipelines. No terminal UI. [12 built-in tools](skills/create-headless-agent/README.md), session persistence, output schema validation, and webhook notifications |
-| [openrouter-typescript-sdk](skills/openrouter-typescript-sdk/README.md) | Complete reference for integrating with [600+ AI models](https://openrouter.ai/models) through the OpenRouter TypeScript SDK using the `callModel` pattern |
+| [create-agent-tui](skills/create-agent-tui/README.md) | Scaffolds a complete agent TUI in Python — like `create-react-app` for terminal agents. Customizable input styles, tool display modes, ASCII banners, loaders, session persistence, and [14 built-in tools](skills/create-agent-tui/README.md) |
+| [create-headless-agent](skills/create-headless-agent/README.md) | Scaffolds a headless agent in Python + Bun — for CLI tools, API servers, queue workers, and pipelines. No terminal UI. [12 built-in tools](skills/create-headless-agent/README.md), session persistence, output schema validation, and webhook notifications |
+| [openrouter-python-sdk](skills/openrouter-python-sdk/README.md) | Complete reference for integrating with [600+ AI models](https://openrouter.ai/models) through the OpenRouter Python SDK using the `callModel` pattern |
 | [openrouter-agent-migration](skills/openrouter-agent-migration/README.md) | Migrating from `@openrouter/sdk` to the standalone `@openrouter/agent` package for `callModel`, `tool()`, stop conditions, and streaming helpers |
 | [openrouter-models](skills/openrouter-models/README.md) | Querying available models, comparing pricing, checking context lengths, finding provider performance, and fuzzy model name resolution |
 | [openrouter-images](skills/openrouter-images/README.md) | Generating images from text prompts and editing existing images using OpenRouter's image generation models |
@@ -75,5 +75,5 @@ All scripts require an `OPENROUTER_API_KEY` environment variable. Get one at [op
 
 - [OpenRouter Documentation](https://openrouter.ai/docs)
 - [OpenRouter API Reference](https://openrouter.ai/docs/api-reference)
-- [OpenRouter TypeScript SDK](https://www.npmjs.com/package/openrouter)
+- [OpenRouter Python SDK](https://www.npmjs.com/package/openrouter)
 - [OpenRouter Models](https://openrouter.ai/models)

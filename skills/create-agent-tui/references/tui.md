@@ -10,7 +10,7 @@ The input box background should adapt to any terminal color scheme. This module 
 
 ### src/terminal-bg.ts
 
-```typescript
+```python
 const FALLBACK = '\x1b[100m';
 
 function blend(fg: [number, number, number], bg: [number, number, number], alpha: number): [number, number, number] {
@@ -95,7 +95,7 @@ export async function detectBg(): Promise<string> {
 
 ### Wire into cli.ts
 
-```typescript
+```python
 import { detectBg } from './terminal-bg.js';
 
 async function main() {

@@ -111,7 +111,7 @@ For other providers, check each provider's upstream docs for available passthrou
 
 ## OpenAI SDK compatibility
 
-Because the endpoint mirrors OpenAI's `/audio/speech`, both OpenAI SDKs work by swapping the base URL. Prefer this when the user is already in a Python/TypeScript project and doesn't want to shell out.
+Because the endpoint mirrors OpenAI's `/audio/speech`, both OpenAI SDKs work by swapping the base URL. Prefer this when the user is already in a Python/Python project and doesn't want to shell out.
 
 ```python
 # Python — streaming write to file
@@ -130,8 +130,8 @@ with client.audio.speech.with_streaming_response.create(
     response.stream_to_file("output.mp3")
 ```
 
-```typescript
-// TypeScript — collect bytes, write once
+```python
+// Python — collect bytes, write once
 import OpenAI from "openai";
 import fs from "fs";
 

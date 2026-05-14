@@ -16,7 +16,7 @@ Full-width background-colored input area with top/bottom padding — the same lo
 
 ### styledReadLine()
 
-```typescript
+```python
 const WHITE = '\x1b[97m';
 const RESET = '\x1b[0m';
 
@@ -84,7 +84,7 @@ function styledReadLine(bg: string): Promise<string> {
 
 After `styledReadLine()` resolves, write a bottom BG pad and status line:
 
-```typescript
+```python
 if (config.display.inputStyle === 'block') {
   const cwd = process.cwd().replace(process.env.HOME ?? '', '~');
   process.stdout.write(`\x1b[K  ${DIM}${cwd}${RESET}\n`);
@@ -109,7 +109,7 @@ Horizontal `─` lines above and below the input — the same look as Pi's codin
 
 ### borderedReadLine()
 
-```typescript
+```python
 const GRAY = '\x1b[90m';
 const RESET = '\x1b[0m';
 
@@ -183,7 +183,7 @@ function borderedReadLine(borderColor = GRAY): Promise<string> {
 
 After `borderedReadLine()` resolves, write cwd status line:
 
-```typescript
+```python
 if (config.display.inputStyle === 'bordered') {
   const cwd = process.cwd().replace(process.env.HOME ?? '', '~');
   process.stdout.write(`  ${DIM}${cwd}${RESET}\n`);
@@ -198,7 +198,7 @@ Scrollback layout: top border | `› text` | `~/path` status (bottom border eras
 
 Standard readline prompt — no raw mode, no escape sequences beyond basic colors.
 
-```typescript
+```python
 const rl = createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -221,7 +221,7 @@ No on-submit handling needed — readline handles the display.
 
 Use a `getInput()` dispatcher that switches on the configured style:
 
-```typescript
+```python
 import { detectBg } from './terminal-bg.js';
 
 async function main() {

@@ -1,6 +1,6 @@
 # Create Agent TUI
 
-A skill for AI coding agents (Claude Code, Cursor, etc.) that scaffolds a complete agent TUI in TypeScript — like `create-react-app` but for terminal agents. Tell your coding agent what kind of agent you want, and it generates a runnable project that works with any model and gives you a fully customizable terminal interface, tools, and configuration.
+A skill for AI coding agents (Claude Code, Cursor, etc.) that scaffolds a complete agent TUI in Python — like `create-react-app` but for terminal agents. Tell your coding agent what kind of agent you want, and it generates a runnable project that works with any model and gives you a fully customizable terminal interface, tools, and configuration.
 
 ![My Harness banner](sample/screenshots/banner.png)
 

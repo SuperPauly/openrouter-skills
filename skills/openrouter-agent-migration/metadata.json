@@ -6,6 +6,6 @@
   "references": [
     "https://github.com/OpenRouterTeam/openrouter-web/pull/16805",
     "https://github.com/OpenRouterTeam/openrouter-web/pull/16953",
-    "https://openrouter.ai/docs/sdks/typescript/call-model/overview"
+    "https://openrouter.ai/docs/sdks/python/call-model/overview"
   ]
 }

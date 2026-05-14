@@ -15,7 +15,7 @@ Three tool display styles are available, configured via `config.display.toolDisp
 
 Shared label mappings used by `grouped` and `minimal` styles:
 
-```typescript
+```python
 const TOOL_LABELS: Record<string, { past: string; noun: string }> = {
   shell: { past: 'Ran', noun: 'shell command' },
   file_read: { past: 'Read', noun: 'file' },
@@ -32,7 +32,7 @@ const TOOL_LABELS: Record<string, { past: string; noun: string }> = {
 
 ## src/renderer.ts
 
-```typescript
+```python
 import type { AgentEvent } from './agent.js';
 import type { DisplayConfig } from './config.js';
 
@@ -251,7 +251,7 @@ export class TuiRenderer {
 
 ## Wire into cli.ts
 
-```typescript
+```python
 import { TuiRenderer } from './renderer.js';
 
 const renderer = new TuiRenderer({ display: config.display });
@@ -272,7 +272,7 @@ Use `endTurn()` instead of `endStreaming()` — it flushes any pending grouped/m
 
 Pass `toolColors` to highlight dangerous or special tools (applies to `emoji` and `grouped` styles):
 
-```typescript
+```python
 const renderer = new TuiRenderer({
   display: config.display,
   toolColors: {
@@ -287,7 +287,7 @@ const renderer = new TuiRenderer({
 
 Override how arguments are summarized for any tool:
 
-```typescript
+```python
 const renderer = new TuiRenderer({
   display: config.display,
   toolFormatters: {

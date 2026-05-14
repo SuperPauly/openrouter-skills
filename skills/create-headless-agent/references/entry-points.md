@@ -18,7 +18,7 @@ The primary entry point. Accepts a prompt via `--prompt`, positional argument, o
 
 The `#!/usr/bin/env bun` shebang on line 1 is required so the OS can execute the file directly when it's invoked via the `bin` symlink created by `bun link`. Without it, the linked binary fails with "Exec format error".
 
-```typescript
+```python
 #!/usr/bin/env bun
 import { parseArgs } from 'util';
 import { readFileSync } from 'fs';
@@ -89,7 +89,7 @@ Prompt sources (in priority order):
   3. Piped stdin (when stdin is not a TTY)
 
 Examples:
-  bun run src/cli.ts --prompt "List all TypeScript files"
+  bun run src/cli.ts --prompt "List all Python files"
   bun run src/cli.ts "What is 2+2?"
   echo "Summarize this" | bun run src/cli.ts
   bun run src/cli.ts --json -p "Search for TODO comments"
@@ -243,7 +243,7 @@ try {
 
 ```bash
 # From --prompt flag
-bun run src/cli.ts --prompt "List all TypeScript files"
+bun run src/cli.ts --prompt "List all Python files"
 
 # From positional argument
 bun run src/cli.ts "What is 2+2?"
@@ -289,7 +289,7 @@ A `Bun.serve()` HTTP server that exposes the agent over a REST API with optional
 
 ### src/server.ts
 
-```typescript
+```python
 import { loadConfig } from './config.js';
 import { runAgentWithRetry, type AgentEvent } from './agent.js';
 
@@ -489,7 +489,7 @@ Expose the agent as an MCP tool so other agents (including Claude Code) can call
 
 ### src/mcp-server.ts
 
-```typescript
+```python
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';

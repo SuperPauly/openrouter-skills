@@ -38,7 +38,7 @@ Guidelines:
 
 For advanced customization, generate a `buildSystemPrompt()` function that assembles the prompt dynamically:
 
-```typescript
+```python
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import type { AgentConfig } from './config.js';
@@ -64,7 +64,7 @@ export function buildSystemPrompt(config: AgentConfig): string {
 
 In `agent.ts`, use `buildSystemPrompt` instead of passing the raw config string:
 
-```typescript
+```python
 import { buildSystemPrompt } from './system-prompt.js';
 
 // In callModel:

@@ -18,7 +18,7 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 
 ### src/session.ts
 
-```typescript
+```python
 import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import { join } from 'path';
 
@@ -75,7 +75,7 @@ export function newSessionPath(dir: string): string {
 
 In `cli.ts`, wrap the message loop:
 
-```typescript
+```python
 import { initSessionDir, loadSession, saveMessage, newSessionPath } from './session.js';
 
 // At startup:
@@ -106,7 +106,7 @@ When conversation history grows too long, summarize older messages to fit within
 
 ### src/compaction.ts
 
-```typescript
+```python
 import { OpenRouter } from '@openrouter/agent';
 
 type Message = { role: string; content: string; [key: string]: unknown };
@@ -203,7 +203,7 @@ export async function compactMessages(
 
 In `agent.ts`, call before `callModel`:
 
-```typescript
+```python
 import { compactMessages } from './compaction.js';
 
 // Inside runAgent, when input is a message array, compact before calling callModel:
@@ -225,7 +225,7 @@ Compose the system prompt from a static base plus dynamically loaded context fil
 
 ### src/system-prompt.ts
 
-```typescript
+```python
 import { readFileSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 
@@ -257,7 +257,7 @@ export function composeSystemPrompt(config: PromptConfig): string {
 
 In `agent.ts`, use as the `instructions` parameter:
 
-```typescript
+```python
 import { composeSystemPrompt } from './system-prompt.js';
 
 const instructions = composeSystemPrompt({
@@ -280,7 +280,7 @@ Gate dangerous tools behind user confirmation. Uses `requireApproval` from `@ope
 
 For tools that should require approval, set `requireApproval: true` in the tool definition:
 
-```typescript
+```python
 export const shellTool = tool({
   name: 'shell',
   description: 'Execute a shell command',
@@ -292,7 +292,7 @@ export const shellTool = tool({
 
 Or use a function for conditional approval based on the config:
 
-```typescript
+```python
 export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-only') {
   return tool({
     name: 'shell',
@@ -312,7 +312,7 @@ export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-
 
 Add `approvalPolicy` to the config:
 
-```typescript
+```python
 // In config.ts AgentConfig interface:
 approvalPolicy: 'always' | 'never' | 'dangerous-only';
 
@@ -336,7 +336,7 @@ Emit structured events for tool calls, API requests, and errors. Entry point dec
 
 ### src/logger.ts
 
-```typescript
+```python
 type EventType = 'tool_call' | 'tool_result' | 'api_request' | 'api_error' | 'turn_start' | 'turn_end';
 
 interface AgentEvent {
@@ -376,7 +376,7 @@ export function consoleLogHandler(event: AgentEvent): void {
 
 In `agent.ts`, emit events in callbacks:
 
-```typescript
+```python
 import { AgentLogger } from './logger.js';
 
 export async function runAgent(config: AgentConfig, input, options?) {
@@ -397,7 +397,7 @@ export async function runAgent(config: AgentConfig, input, options?) {
 
 In `cli.ts`, attach a handler:
 
-```typescript
+```python
 import { AgentLogger, consoleLogHandler } from './logger.js';
 
 const logger = new AgentLogger();
@@ -414,7 +414,7 @@ Let users type `@filename` to attach file content to their message. Before sendi
 
 In `cli.ts`, before pushing the user message:
 
-```typescript
+```python
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
@@ -452,7 +452,7 @@ Optional: add tab completion for `@` using `rl.completer` to fuzzy-match files i
 
 In `cli.ts`, before command dispatch:
 
-```typescript
+```python
 import { execSync } from 'child_process';
 
 if (trimmed.startsWith('!')) {
@@ -479,7 +479,7 @@ Replace readline with raw terminal mode to support Shift+Enter for newlines. Ent
 
 ### src/multi-line-input.ts
 
-```typescript
+```python
 import { emitKeypressEvents } from 'readline';
 
 export function readMultiLine(prompt: string): Promise<string> {

@@ -22,7 +22,7 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 
 ### src/session.ts
 
-```typescript
+```python
 import { appendFileSync, mkdirSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
@@ -81,7 +81,7 @@ export function newSessionPath(dir: string): string {
 
 In `cli.ts`, wire session persistence around the agent call:
 
-```typescript
+```python
 import { initSessionDir, loadSession, saveMessage, newSessionPath } from './session.js';
 
 // At startup
@@ -106,7 +106,7 @@ saveMessage(sessionPath, { role: 'assistant', content: result.text });
 
 For single-shot CLI mode, session persistence is optional. Skip it when the agent runs once and exits, or enable it for audit trails:
 
-```typescript
+```python
 if (config.sessionDir) {
   initSessionDir(config.sessionDir);
   const sessionPath = newSessionPath(config.sessionDir);
@@ -124,7 +124,7 @@ When conversation history grows too long, summarize older messages to fit within
 
 ### src/compaction.ts
 
-```typescript
+```python
 import { OpenRouter } from '@openrouter/agent';
 
 type Message = { role: string; content: string; [key: string]: unknown };
@@ -221,7 +221,7 @@ export async function compactMessages(
 
 In `agent.ts`, compact before calling the model:
 
-```typescript
+```python
 import { compactMessages } from './compaction.js';
 
 export async function runAgent(config: AgentConfig, input: string | Message[], options?) {
@@ -269,7 +269,7 @@ You generally do **not** need to offload `file_read` (it already paginates), `fi
 
 An inline helper: each tool calls `offloadIfLarge(result, ctx, opts?)` at the end of its `execute`. If the serialized result is under the byte budget, it passes through unchanged; otherwise it gets written to disk and replaced with a preview + pointer. This pattern doesn't require refactoring the existing `tool({...})` exports in `references/tools.md` — the check just lives inside the tool's own `execute` body.
 
-```typescript
+```python
 import { resolve, sep } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 
@@ -342,7 +342,7 @@ export function isInsideStorageDir(path: string, storageDir: string): boolean {
 
 No plain-object refactor needed. Add one line at the return sites of tools whose output can be large. For the `shell` tool defined in `references/tools.md`:
 
-```typescript
+```python
 // src/tools/shell.ts
 import { tool } from '@openrouter/agent/tool';
 import { z } from 'zod';
@@ -371,7 +371,7 @@ The companion tool — the model needs a way to retrieve more of the persisted p
 
 It's exported as a factory so the storage dir can be passed in and wired from the same place that configures `offloadIfLarge`:
 
-```typescript
+```python
 import { tool } from '@openrouter/agent/tool';
 import { z } from 'zod';
 import { isInsideStorageDir } from '../tool-offload.js';
@@ -420,7 +420,7 @@ export function createReadPersistedResultTool(storageDir: string) {
 
 Use a single `storageDir` constant so `offloadIfLarge` inside each tool and `createReadPersistedResultTool` in the registry agree on the location:
 
-```typescript
+```python
 import { serverTool } from '@openrouter/agent';
 import { OFFLOAD_DEFAULTS } from '../tool-offload.js';
 import { createReadPersistedResultTool } from './read-persisted-result.js';
@@ -469,7 +469,7 @@ Build the system prompt from a static base plus dynamically loaded context files
 
 ### src/system-prompt.ts
 
-```typescript
+```python
 import { resolve } from 'path';
 
 interface PromptConfig {
@@ -501,7 +501,7 @@ export async function composeSystemPrompt(config: PromptConfig): Promise<string>
 
 In `agent.ts`, use as the `instructions` parameter:
 
-```typescript
+```python
 import { composeSystemPrompt } from './system-prompt.js';
 
 const instructions = await composeSystemPrompt({
@@ -531,7 +531,7 @@ Gate dangerous tools behind programmatic approval. Unlike the TUI version, headl
 
 Set `requireApproval` on individual tool definitions. It accepts `true`, `false`, or a function that receives the tool arguments and returns a boolean:
 
-```typescript
+```python
 import { tool } from '@openrouter/agent/tool';
 import { z } from 'zod';
 
@@ -549,7 +549,7 @@ export const shellTool = tool({
 
 ### Conditional approval with a predicate
 
-```typescript
+```python
 export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-only') {
   return tool({
     name: 'shell',
@@ -573,7 +573,7 @@ export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-
 
 Since there is no terminal prompt, wire approvals to an external system. The `onApproval` callback in your agent runner decides the outcome:
 
-```typescript
+```python
 // src/approval.ts
 
 export type ApprovalDecision = 'approve' | 'deny';
@@ -612,7 +612,7 @@ export async function httpApproval(
 
 Add `approvalPolicy` to the config and wire it into the tool builder:
 
-```typescript
+```python
 // In config.ts AgentConfig interface:
 approvalPolicy: 'always' | 'never' | 'dangerous-only';
 approvedTools: string[];  // auto-approved tool names for headless mode
@@ -652,7 +652,7 @@ The SDK's [`StateAccessor`](https://openrouter.ai/docs/agent-sdk/call-model/tool
 
 ### src/state.ts
 
-```typescript
+```python
 import type { StateAccessor, ConversationState } from '@openrouter/agent';
 import { createInitialState } from '@openrouter/agent';
 import { mkdirSync, existsSync } from 'fs';
@@ -693,7 +693,7 @@ export async function loadOrCreateState(
 
 ### Wire into agent.ts
 
-```typescript
+```python
 const result = client.callModel({
   model: config.model,
   instructions: config.systemPrompt.replace('{cwd}', process.cwd()),
@@ -706,7 +706,7 @@ const result = client.callModel({
 
 ### Usage: resuming an interrupted run
 
-```typescript
+```python
 import { fileStateAccessor } from './state.js';
 
 // Fresh start
@@ -724,7 +724,7 @@ await runAgent(config, '', { onEvent: ... });
 
 ### Usage: approval flow that survives restart
 
-```typescript
+```python
 // Run 1: agent generates a tool call requiring approval, state.status = 'awaiting_approval'
 await runAgent(config, 'Delete all .bak files', { /* ... */ });
 
@@ -757,7 +757,7 @@ Emit typed JSON events to stderr or a log file for observability. Headless agent
 
 ### src/logger.ts
 
-```typescript
+```python
 import { appendFileSync } from 'fs';
 
 type EventType =
@@ -815,7 +815,7 @@ export function fileLogHandler(logPath: string): EventHandler {
 
 In `cli.ts`, create a logger and pass it to `runAgent`:
 
-```typescript
+```python
 import { AgentLogger, stderrJsonHandler } from './logger.js';
 
 const logger = new AgentLogger();
@@ -841,7 +841,7 @@ logger.emit('agent_end', {
 
 For file logging (useful in server/queue-worker mode):
 
-```typescript
+```python
 import { fileLogHandler } from './logger.js';
 
 logger.on(fileLogHandler('./agent-events.jsonl'));
@@ -855,7 +855,7 @@ Constrain the agent's final text response to match a JSON schema. Inspired by Co
 
 ### src/output-schema.ts
 
-```typescript
+```python
 import { z } from 'zod';
 
 interface ValidationSuccess<T> {
@@ -968,7 +968,7 @@ function jsonSchemaToZod(schema: Record<string, unknown>): z.ZodType {
 
 Add a `--output-schema` CLI flag and validate after the agent completes:
 
-```typescript
+```python
 // In cli.ts argument parsing:
 const args = parseArgs({
   args: Bun.argv.slice(2),
@@ -1046,7 +1046,7 @@ POST results to an HTTP endpoint when the agent completes. Fire-and-forget with 
 
 ### src/webhook.ts
 
-```typescript
+```python
 export interface WebhookPayload {
   status: 'success' | 'error';
   text?: string;
@@ -1109,7 +1109,7 @@ export function resolveWebhookUrl(config?: { webhookUrl?: string }): string | nu
 
 In `cli.ts`, call after the agent completes:
 
-```typescript
+```python
 import { notifyWebhook, resolveWebhookUrl } from './webhook.js';
 
 const startTime = performance.now();
@@ -1136,7 +1136,7 @@ console.log(result.text);
 
 For error cases:
 
-```typescript
+```python
 try {
   const result = await runAgent(config, input, { onEvent });
   // ... success webhook above ...

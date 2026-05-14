@@ -50,7 +50,7 @@ The `OpenRouter` client class and `client.callModel()` pattern work identically.
 
 The rest of your code stays the same:
 
-```typescript
+```python
 const client = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 
 const result = client.callModel({
@@ -74,7 +74,7 @@ const text = await result.getText();
 
 A standalone `callModel` function is also available for advanced use cases where a pre-existing `OpenRouterCore` instance is available:
 
-```typescript
+```python
 import { callModel } from '@openrouter/agent/call-model';
 
 // Requires an OpenRouterCore instance (from @openrouter/sdk/core)
@@ -123,7 +123,7 @@ For most use cases, prefer the `client.callModel()` method shown above.
 
 ### Before (using @openrouter/sdk)
 
-```typescript
+```python
 import OpenRouter, { tool, stepCountIs, hasToolCall } from '@openrouter/sdk';
 import { z } from 'zod';
 
@@ -161,7 +161,7 @@ const text = await result.getText();
 
 ### After (using @openrouter/agent)
 
-```typescript
+```python
 import { OpenRouter } from '@openrouter/agent';
 import { tool } from '@openrouter/agent/tool';
 import { stepCountIs, hasToolCall } from '@openrouter/agent/stop-conditions';
@@ -278,7 +278,7 @@ Keep `@openrouter/sdk` installed if you use any of these non-agent features:
 
 For mixed projects, use `@openrouter/sdk` for these features and `@openrouter/agent` for agent features:
 
-```typescript
+```python
 import OpenRouter from '@openrouter/sdk';               // SDK client for models, credits, etc.
 import { OpenRouter as Agent } from '@openrouter/agent'; // Agent client for callModel
 import { tool } from '@openrouter/agent/tool';
@@ -309,7 +309,7 @@ These features are only available in `@openrouter/agent`, not in `@openrouter/sd
 
 Type-safe shared state across all tools in a conversation:
 
-```typescript
+```python
 import { OpenRouter } from '@openrouter/agent';
 import { z } from 'zod';
 
@@ -333,7 +333,7 @@ const result = client.callModel({
 
 Tools can declare their own typed context and access shared context:
 
-```typescript
+```python
 import { tool } from '@openrouter/agent/tool';
 import { z } from 'zod';
 
@@ -356,7 +356,7 @@ const myTool = tool({
 
 Require user approval before tool execution:
 
-```typescript
+```python
 const dangerousTool = tool({
   name: 'delete_file',
   description: 'Delete a file',
@@ -368,7 +368,7 @@ const dangerousTool = tool({
 
 ### Turn Lifecycle Callbacks
 
-```typescript
+```python
 const result = client.callModel({
   model: 'openai/gpt-5-nano',
   input: 'Complex task',

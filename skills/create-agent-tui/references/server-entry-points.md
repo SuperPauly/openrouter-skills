@@ -15,7 +15,7 @@ Replace `src/cli.ts` with an HTTP server when the agent should be accessed via A
 
 ### src/server.ts
 
-```typescript
+```python
 import { createServer } from 'http';
 import { loadConfig } from './config.js';
 import { runAgentWithRetry } from './agent.js';
@@ -183,7 +183,7 @@ For real-time bidirectional communication (e.g., a chat UI), replace SSE with We
 
 Use `@openrouter/agent`'s dynamic parameters to change the model based on conversation context:
 
-```typescript
+```python
 client.callModel({
   model: (ctx) => ctx.numberOfTurns > 5
     ? 'anthropic/claude-sonnet-4'  // upgrade for complex conversations
@@ -196,7 +196,7 @@ client.callModel({
 
 Beyond `stepCountIs` and `maxCost`, create domain-specific stop conditions:
 
-```typescript
+```python
 const hasAnswer = (ctx) =>
   ctx.messages.some(m =>
     m.role === 'assistant' && m.content?.includes('FINAL ANSWER:')

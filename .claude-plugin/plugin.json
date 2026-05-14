@@ -1,6 +1,6 @@
 {
   "name": "openrouter",
-  "description": "Skills for the OpenRouter platform: TypeScript SDK, model discovery, pricing, image generation, and provider performance",
+  "description": "Skills for the OpenRouter platform: Python SDK, model discovery, pricing, image generation, and provider performance",
   "version": "1.0.0",
   "author": {
     "name": "OpenRouter"

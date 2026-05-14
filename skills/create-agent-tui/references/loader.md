@@ -2,7 +2,7 @@
 
 Three loader animations are available, configured via `config.display.loader`. The default is `gradient` with text `"Working"`.
 
-```typescript
+```python
 export interface LoaderConfig {
   text: string;
   style: 'gradient' | 'spinner' | 'minimal';
@@ -19,7 +19,7 @@ export interface LoaderConfig {
 
 ## src/loader.ts
 
-```typescript
+```python
 import type { LoaderConfig } from './config.js';
 
 const DIM = '\x1b[2m';
@@ -94,7 +94,7 @@ export class Loader {
 
 ## Wire into cli.ts
 
-```typescript
+```python
 import { Loader } from './loader.js';
 
 // Before the agent call — show loader + a preview input box below it:

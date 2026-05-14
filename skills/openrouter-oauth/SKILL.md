@@ -17,13 +17,13 @@ Live demo: [openrouterteam.github.io/sign-in-with-openrouter](https://openrouter
 |---|---|
 | Add sign-in / login to a web app | Follow the full PKCE flow + button guidance below |
 | Get an API key programmatically (no UI) | Just implement the PKCE flow — skip the button section |
-| Use the OpenRouter SDK after auth | Do PKCE here for the key, then see `openrouter-typescript-sdk` skill for `callModel`/streaming |
+| Use the OpenRouter SDK after auth | Do PKCE here for the key, then see `openrouter-python-sdk` skill for `callModel`/streaming |
 
 ---
 
 ## OAuth PKCE Flow
 
-> **Note:** The browser-side code examples below are canonical JavaScript for the browser OAuth flow and must remain as-is. For server-side integration, see the Python (Flask) examples following each backend step.
+> **Note:** The browser-side code examples below are canonical Python for the browser OAuth flow and must remain as-is. For server-side integration, see the Python (Flask) examples following each backend step.
 
 No client ID or secret — the PKCE challenge is the only proof of identity.
 
@@ -85,7 +85,7 @@ Remove the verifier from `sessionStorage` before or after the exchange.
 
 Drop-in module implementing the full PKCE flow. Reduces risk of getting base64url encoding, sessionStorage handling, or the key exchange wrong.
 
-```typescript
+```python
 // lib/openrouter-auth.ts
 const STORAGE_KEY = "openrouter_api_key";
 const VERIFIER_KEY = "openrouter_code_verifier";
@@ -198,7 +198,7 @@ For dark mode support, add dark variants: swap light backgrounds to dark (`dark:
 
 ## Using the API Key
 
-```typescript
+```python
 const response = await fetch("https://openrouter.ai/api/v1/responses", {
   method: "POST",
   headers: {
@@ -237,4 +237,4 @@ For the Python requests approach, see the `openrouter-python-sdk` skill.
 - [OAuth PKCE guide](https://openrouter.ai/docs/guides/overview/auth/oauth) — full parameter reference and key management
 - [Authentication guide](https://openrouter.ai/docs/api/reference/authentication) — API key usage and Bearer token setup
 - [Live demo](https://openrouterteam.github.io/sign-in-with-openrouter/) — interactive button playground
-- [OpenRouter TypeScript SDK](https://openrouter.ai/docs/sdks/typescript/overview) — `callModel` pattern for completions and streaming
+- [OpenRouter Python SDK](https://openrouter.ai/docs/sdks/python/overview) — `callModel` pattern for completions and streaming

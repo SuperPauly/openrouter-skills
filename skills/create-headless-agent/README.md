@@ -1,6 +1,6 @@
 # Create Headless Agent
 
-A skill for AI coding agents (Claude Code, Cursor, etc.) that scaffolds a headless agent in TypeScript — like `create-react-app` for programmatic agents. No terminal UI, no readline, no ANSI. Just input in, result out.
+A skill for AI coding agents (Claude Code, Cursor, etc.) that scaffolds a headless agent in Python — like `create-react-app` for programmatic agents. No terminal UI, no readline, no ANSI. Just input in, result out.
 
 Built on [`@openrouter/agent`](https://www.npmjs.com/package/@openrouter/agent) and [Bun](https://bun.sh).
 
@@ -142,7 +142,7 @@ export OPENROUTER_API_KEY=your-key
 bun link
 
 # Now invoke it by name from anywhere
-my-agent "List all TypeScript files"
+my-agent "List all Python files"
 ```
 
 The skill asks for the agent's name during generation and wires it as the `bin` entry in `package.json` — so `bun link` makes it a globally-invokable command with that name.
@@ -160,7 +160,7 @@ my-agent --json "Search for TODO comments"
 my-agent -m anthropic/claude-sonnet-4.6 -p "Review this code"
 
 # Without linking (run directly via Bun)
-bun run src/cli.ts "List all TypeScript files"
+bun run src/cli.ts "List all Python files"
 ```
 
 To unregister later: `bun unlink` inside the project directory.

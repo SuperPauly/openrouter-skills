@@ -128,9 +128,9 @@ Provider passthrough goes under `provider.options.<slug>` and is only forwarded 
 
 Options keyed by provider slug are forwarded only when that provider matches; other keys are ignored. Check each provider's upstream docs for available passthrough keys.
 
-## TypeScript (fetch)
+## Python (fetch)
 
-```typescript
+```python
 import fs from "fs";
 
 const audio = await fs.promises.readFile("audio.wav");

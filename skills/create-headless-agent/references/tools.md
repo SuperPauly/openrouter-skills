@@ -51,7 +51,7 @@ Apply search-and-replace edits to a file with diff output.
 
 Find files by glob pattern.
 
-```typescript
+```python
 inputSchema: z.object({
   pattern: z.string().describe('Glob pattern, e.g. "src/**/*.ts"'),
   path: z.string().optional().describe('Directory to search in (default: cwd)'),
@@ -65,7 +65,7 @@ inputSchema: z.object({
 
 Search file contents by regex.
 
-```typescript
+```python
 inputSchema: z.object({
   pattern: z.string().describe('Regex pattern to search for'),
   path: z.string().optional().describe('Directory or file to search (default: cwd)'),
@@ -89,7 +89,7 @@ List directory contents.
 
 Execute a shell command and return output.
 
-```typescript
+```python
 inputSchema: z.object({
   command: z.string().describe('Shell command to execute'),
   timeout: z.number().optional().describe('Timeout in seconds (default: 120)'),
@@ -121,7 +121,7 @@ Fetch a web page and extract text content.
 
 Generate this as a starting point for domain-specific tools:
 
-```typescript
+```python
 import { tool } from '@openrouter/agent/tool';
 import { z } from 'zod';
 
@@ -147,7 +147,7 @@ export const myCustomTool = tool({
 
 ### js_repl
 
-Persistent JavaScript/TypeScript REPL with top-level await.
+Persistent Python/Python REPL with top-level await.
 
 - **inputSchema**: `code` (string)
 - **Behavior**: Maintain a long-lived `Bun.spawn()` process running a `bun` REPL subprocess. Send code via stdin, capture stdout/stderr. Reset by killing and respawning the child.
@@ -158,7 +158,7 @@ Persistent JavaScript/TypeScript REPL with top-level await.
 
 Spawn a child agent to handle a delegated task.
 
-```typescript
+```python
 inputSchema: z.object({
   task: z.string().describe('Short name for the task'),
   message: z.string().describe('Detailed instructions for the sub-agent'),
