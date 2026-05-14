@@ -1,5 +1,6 @@
 """grep tool — search file contents by regex pattern."""
 
+import fnmatch
 import os
 import re
 import subprocess
