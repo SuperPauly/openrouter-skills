@@ -1,6 +1,6 @@
 # openrouter-stt
 
-Transcribe speech to text via OpenRouter's `POST /api/v1/audio/transcriptions`. Covers basic usage with `curl`, model discovery, audio format selection, provider-specific options, and zero-dep Python (`fetch`) and Python (`requests`) examples.
+Transcribe speech to text via OpenRouter's `POST /api/v1/audio/transcriptions`. Covers basic usage with `curl`, model discovery, audio format selection, provider-specific options, and Python examples using `urllib` and `requests`.
 
 ## Install
 
@@ -17,7 +17,7 @@ For other install methods (Claude Code plugin marketplace, Cursor Rules, etc.) s
 ## Prerequisites
 
 - `OPENROUTER_API_KEY` environment variable. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
-- `curl` and `jq` (for the bash workflow), or Python `requests` / Python `fetch`.
+- `curl` and `jq` (for the bash workflow), or Python `requests` / Python `urllib`.
 
 ## What it covers
 
@@ -28,4 +28,4 @@ See [SKILL.md](SKILL.md) for the full reference, including:
 - Discovering STT models via `/api/v1/models?output_modalities=transcription`
 - Audio format guidance (`wav`, `mp3`, `flac`, `m4a`, `ogg`, `webm`, `aac`) and avoiding format/bytes mismatch
 - Provider passthrough (`provider.options.<slug>`) for things like Groq's vocabulary `prompt`
-- Zero-dep Python (`fetch`) and Python (`requests`) examples
+- Zero-dep Python (`urllib`) and Python (`requests`) examples

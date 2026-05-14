@@ -17,7 +17,7 @@ For other install methods (Claude Code plugin marketplace, Cursor Rules, etc.) s
 ## Prerequisites
 
 - `OPENROUTER_API_KEY` environment variable. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
-- `curl` and `jq` (for the bash workflow), or the OpenAI Python/Python SDK.
+- `curl` and `jq` (for the bash workflow), or the OpenAI Python SDK.
 
 ## What it covers
 
