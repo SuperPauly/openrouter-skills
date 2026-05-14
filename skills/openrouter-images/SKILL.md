@@ -14,7 +14,7 @@ The `OPENROUTER_API_KEY` environment variable must be set. Get a key at https://
 ## First-Time Setup
 
 ```bash
-cd <skill-path>/scripts && npm install
+cd <skill-path>/scripts && pip install -r requirements.txt
 ```
 
 ## Decision Tree
@@ -23,21 +23,21 @@ Pick the right script based on what the user is asking:
 
 | User wants to... | Script | Example |
 |---|---|---|
-| Generate an image from a text description | `generate.ts "prompt"` | "Create an image of a sunset over mountains" |
-| Generate with specific aspect ratio | `generate.ts "prompt" --aspect-ratio 16:9` | "Make a wide landscape image of a forest" |
-| Generate with a different model | `generate.ts "prompt" --model <id>` | "Generate using gemini-2.5-flash-image" |
-| Edit or modify an existing image | `edit.ts path "prompt"` | "Make the sky purple in photo.png" |
-| Transform an image with instructions | `edit.ts path "prompt"` | "Add a party hat to the animal in this image" |
+| Generate an image from a text description | `generate.py "prompt"` | "Create an image of a sunset over mountains" |
+| Generate with specific aspect ratio | `generate.py "prompt" --aspect-ratio 16:9` | "Make a wide landscape image of a forest" |
+| Generate with a different model | `generate.py "prompt" --model <id>` | "Generate using gemini-2.5-flash-image" |
+| Edit or modify an existing image | `edit.py path "prompt"` | "Make the sky purple in photo.png" |
+| Transform an image with instructions | `edit.py path "prompt"` | "Add a party hat to the animal in this image" |
 
 ## Generate Image
 
 Create a new image from a text prompt:
 
 ```bash
-cd <skill-path>/scripts && npx tsx generate.ts "a red panda wearing sunglasses"
-cd <skill-path>/scripts && npx tsx generate.ts "a futuristic cityscape at night" --aspect-ratio 16:9
-cd <skill-path>/scripts && npx tsx generate.ts "pixel art of a dragon" --output dragon.png
-cd <skill-path>/scripts && npx tsx generate.ts "a watercolor painting" --model google/gemini-2.5-flash-image
+cd <skill-path>/scripts && python generate.py "a red panda wearing sunglasses"
+cd <skill-path>/scripts && python generate.py "a futuristic cityscape at night" --aspect-ratio 16:9
+cd <skill-path>/scripts && python generate.py "pixel art of a dragon" --output dragon.png
+cd <skill-path>/scripts && python generate.py "a watercolor painting" --model google/gemini-2.5-flash-image
 ```
 
 ### Options
@@ -54,9 +54,9 @@ cd <skill-path>/scripts && npx tsx generate.ts "a watercolor painting" --model g
 Modify an existing image with a text prompt:
 
 ```bash
-cd <skill-path>/scripts && npx tsx edit.ts photo.png "make the sky purple"
-cd <skill-path>/scripts && npx tsx edit.ts avatar.jpg "add a party hat" --output avatar-hat.png
-cd <skill-path>/scripts && npx tsx edit.ts scene.png "convert to watercolor style" --model google/gemini-2.5-flash-image
+cd <skill-path>/scripts && python edit.py photo.png "make the sky purple"
+cd <skill-path>/scripts && python edit.py avatar.jpg "add a party hat" --output avatar-hat.png
+cd <skill-path>/scripts && python edit.py scene.png "convert to watercolor style" --model google/gemini-2.5-flash-image
 ```
 
 ### Options
@@ -72,7 +72,7 @@ Supported input formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`
 
 ## Output Format
 
-### generate.ts
+### generate.py
 
 ```json
 {
@@ -83,7 +83,7 @@ Supported input formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`
 }
 ```
 
-### edit.ts
+### edit.py
 
 ```json
 {
@@ -119,7 +119,7 @@ The default model is `google/gemini-3.1-flash-image-preview` (Nano Banana 2). To
 Use the `openrouter-models` skill to discover image-capable models:
 
 ```bash
-cd <openrouter-models-skill-path>/scripts && npx tsx search-models.ts --modality image
+cd <openrouter-models-skill-path>/scripts && python search_models.py --modality image
 ```
 
 ## Presenting Results

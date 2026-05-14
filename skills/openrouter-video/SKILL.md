@@ -70,6 +70,46 @@ echo "$resp" | jq --arg out "$(realpath "$OUTPUT")" \
   '{job_id: .id, generation_id, video_saved: $out, usage}'
 ```
 
+## Python (requests)
+
+```python
+#!/usr/bin/env python3
+"""OpenRouter video generation via Python requests"""
+import requests
+import json
+import os
+import sys
+
+BASE_URL = "https://openrouter.ai/api/v1"
+API_KEY = os.environ["OPENROUTER_API_KEY"]
+HEADERS = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+
+
+def generate_video(prompt: str, model: str = "google/veo-3") -> dict:
+    resp = requests.post(
+        f"{BASE_URL}/responses",
+        headers=HEADERS,
+        json={
+            "model": model,
+            "input": prompt,
+        },
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+if __name__ == "__main__":
+    prompt = sys.argv[1] if len(sys.argv) > 1 else "A cat playing piano in a jazz club"
+    result = generate_video(prompt)
+    print(json.dumps(result, indent=2))
+```
+
+Usage:
+```bash
+python video.py "A sunset over the ocean"
+OPENROUTER_API_KEY=sk-or-... python video.py "A rocket launching"
+```
+
 ## Parameters
 
 Required: `model`, `prompt`. Common optional fields:

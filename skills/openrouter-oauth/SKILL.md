@@ -23,6 +23,8 @@ Live demo: [openrouterteam.github.io/sign-in-with-openrouter](https://openrouter
 
 ## OAuth PKCE Flow
 
+> **Note:** The browser-side code examples below are canonical JavaScript for the browser OAuth flow and must remain as-is. For server-side integration, see the Python (Flask) examples following each backend step.
+
 No client ID or secret — the PKCE challenge is the only proof of identity.
 
 ### Step 1: Generate verifier and challenge
@@ -210,7 +212,23 @@ const response = await fetch("https://openrouter.ai/api/v1/responses", {
 });
 ```
 
-For the type-safe SDK approach (`callModel`, streaming, tool use), see the `openrouter-typescript-sdk` skill.
+```python
+# Python equivalent — use the key in requests
+import requests
+
+user_headers = {
+    "Authorization": f"Bearer {user_api_key}",
+    "Content-Type": "application/json",
+}
+resp = requests.post(
+    "https://openrouter.ai/api/v1/responses",
+    headers=user_headers,
+    json={"model": "openai/gpt-5-nano", "input": "Hello!"},
+)
+print(resp.json()["output"][0]["content"][0]["text"])
+```
+
+For the Python requests approach, see the `openrouter-python-sdk` skill.
 
 ---
 

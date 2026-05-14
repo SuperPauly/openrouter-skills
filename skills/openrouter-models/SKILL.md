@@ -9,12 +9,12 @@ Discover, search, and compare the 300+ AI models available on OpenRouter. Query 
 
 ## Prerequisites
 
-The `OPENROUTER_API_KEY` environment variable is optional for most scripts. It is only required for `get-endpoints.ts` (provider performance data). Get a key at https://openrouter.ai/keys
+The `OPENROUTER_API_KEY` environment variable is optional for most scripts. It is only required for `get_endpoints.py` (provider performance data). Get a key at https://openrouter.ai/keys
 
 ## First-Time Setup
 
 ```bash
-cd <skill-path>/scripts && npm install
+cd <skill-path>/scripts && pip install -r requirements.txt
 ```
 
 ## Decision Tree
@@ -23,29 +23,29 @@ Pick the right script based on what the user is asking:
 
 | User wants to... | Script | Example |
 |---|---|---|
-| See all available models | `list-models.ts` | "What models does OpenRouter have?" |
-| Find recently added models | `list-models.ts --sort newest` | "What are the newest models?" |
-| Find cheapest models | `list-models.ts --sort price` | "What's the cheapest model?" |
-| Find highest throughput models | `list-models.ts --sort throughput` | "Which models have the most output capacity?" |
-| Find models in a category | `list-models.ts --category X` | "Best programming models?" |
-| Search by name | `search-models.ts "query"` | "Do they have Claude?" |
-| Resolve an informal model name | `resolve-model.ts "query"` | "Use the nano banana 2.0 model" |
-| Find image-capable models | `search-models.ts --modality image` | "Which models accept images?" |
-| Compare specific models | `compare-models.ts A B` | "Compare Claude vs GPT-4o" |
-| Compare by throughput | `compare-models.ts A B --sort throughput` | "Which has higher throughput, Claude or GPT-4o?" |
-| Check provider performance | `get-endpoints.ts "model-id"` | "Which provider is fastest for Claude?" |
-| Find fastest provider | `get-endpoints.ts "model-id" --sort throughput` | "Fastest provider for Claude Sonnet?" |
-| Find lowest-latency provider | `get-endpoints.ts "model-id" --sort latency` | "Lowest latency provider for GPT-4o?" |
-| Check model availability | `get-endpoints.ts "model-id"` | "Is Claude Sonnet 4 up right now?" |
+| See all available models | `list_models.py` | "What models does OpenRouter have?" |
+| Find recently added models | `list_models.py --sort newest` | "What are the newest models?" |
+| Find cheapest models | `list_models.py --sort price` | "What's the cheapest model?" |
+| Find highest throughput models | `list_models.py --sort throughput` | "Which models have the most output capacity?" |
+| Find models in a category | `list_models.py --category X` | "Best programming models?" |
+| Search by name | `search_models.py "query"` | "Do they have Claude?" |
+| Resolve an informal model name | `resolve_model.py "query"` | "Use the nano banana 2.0 model" |
+| Find image-capable models | `search_models.py --modality image` | "Which models accept images?" |
+| Compare specific models | `compare_models.py A B` | "Compare Claude vs GPT-4o" |
+| Compare by throughput | `compare_models.py A B --sort throughput` | "Which has higher throughput, Claude or GPT-4o?" |
+| Check provider performance | `get_endpoints.py "model-id"` | "Which provider is fastest for Claude?" |
+| Find fastest provider | `get_endpoints.py "model-id" --sort throughput` | "Fastest provider for Claude Sonnet?" |
+| Find lowest-latency provider | `get_endpoints.py "model-id" --sort latency` | "Lowest latency provider for GPT-4o?" |
+| Check model availability | `get_endpoints.py "model-id"` | "Is Claude Sonnet 4 up right now?" |
 
 ## Resolve Model
 
 Resolve an informal or vague model name to an exact OpenRouter model ID using fuzzy matching:
 
 ```bash
-cd <skill-path>/scripts && npx tsx resolve-model.ts "claude sonnet"
-cd <skill-path>/scripts && npx tsx resolve-model.ts "gpt 4o mini"
-cd <skill-path>/scripts && npx tsx resolve-model.ts "llama 3.1"
+cd <skill-path>/scripts && python resolve_model.py "claude sonnet"
+cd <skill-path>/scripts && python resolve_model.py "gpt 4o mini"
+cd <skill-path>/scripts && python resolve_model.py "llama 3.1"
 ```
 
 Results include a `confidence` level and `score`:
@@ -56,12 +56,12 @@ Results include a `confidence` level and `score`:
 | `medium` (≥0.55) | Confirm with the user before proceeding |
 | `low` (≥0.30) | Suggest the matches and ask the user to clarify |
 
-**Two-step workflow:** First resolve the informal name with `resolve-model.ts`, then feed the resolved `id` into other scripts (`compare-models.ts`, `get-endpoints.ts`, etc.).
+**Two-step workflow:** First resolve the informal name with `resolve_model.py`, then feed the resolved `id` into other scripts (`compare_models.py`, `get_endpoints.py`, etc.).
 
 ## List Models
 
 ```bash
-cd <skill-path>/scripts && npx tsx list-models.ts
+cd <skill-path>/scripts && python list_models.py
 ```
 
 ### Filter by Category
@@ -69,7 +69,7 @@ cd <skill-path>/scripts && npx tsx list-models.ts
 Server-side category filtering:
 
 ```bash
-cd <skill-path>/scripts && npx tsx list-models.ts --category programming
+cd <skill-path>/scripts && python list_models.py --category programming
 ```
 
 Categories: `programming`, `roleplay`, `marketing`, `marketing/seo`, `technology`, `science`, `translation`, `legal`, `finance`, `health`, `trivia`, `academia`
@@ -77,10 +77,10 @@ Categories: `programming`, `roleplay`, `marketing`, `marketing/seo`, `technology
 ### Sort Results
 
 ```bash
-cd <skill-path>/scripts && npx tsx list-models.ts --sort newest      # Recently added first
-cd <skill-path>/scripts && npx tsx list-models.ts --sort price       # Cheapest first
-cd <skill-path>/scripts && npx tsx list-models.ts --sort context     # Largest context first
-cd <skill-path>/scripts && npx tsx list-models.ts --sort throughput  # Most output tokens first
+cd <skill-path>/scripts && python list_models.py --sort newest      # Recently added first
+cd <skill-path>/scripts && python list_models.py --sort price       # Cheapest first
+cd <skill-path>/scripts && python list_models.py --sort context     # Largest context first
+cd <skill-path>/scripts && python list_models.py --sort throughput  # Most output tokens first
 ```
 
 Models with upcoming `expiration_date` values trigger a stderr warning.
@@ -88,9 +88,9 @@ Models with upcoming `expiration_date` values trigger a stderr warning.
 ## Search Models
 
 ```bash
-cd <skill-path>/scripts && npx tsx search-models.ts "claude"
-cd <skill-path>/scripts && npx tsx search-models.ts --modality image
-cd <skill-path>/scripts && npx tsx search-models.ts "gpt" --modality text
+cd <skill-path>/scripts && python search_models.py "claude"
+cd <skill-path>/scripts && python search_models.py --modality image
+cd <skill-path>/scripts && python search_models.py "gpt" --modality text
 ```
 
 Modalities: `text`, `image`, `audio`, `file`
@@ -100,8 +100,8 @@ Modalities: `text`, `image`, `audio`, `file`
 Compare two or more models side-by-side with pricing in per-million-tokens format. Uses exact ID matching — `openai/gpt-4o` matches only that model, not variants like `gpt-4o-mini`.
 
 ```bash
-cd <skill-path>/scripts && npx tsx compare-models.ts "anthropic/claude-sonnet-4" "openai/gpt-4o"
-cd <skill-path>/scripts && npx tsx compare-models.ts "anthropic/claude-sonnet-4" "openai/gpt-4o" "google/gemini-2.5-pro" --sort price
+cd <skill-path>/scripts && python compare_models.py "anthropic/claude-sonnet-4" "openai/gpt-4o"
+cd <skill-path>/scripts && python compare_models.py "anthropic/claude-sonnet-4" "openai/gpt-4o" "google/gemini-2.5-pro" --sort price
 ```
 
 Sort options: `price` (cheapest first), `context` (largest first), `speed`/`throughput` (most output tokens first)
@@ -111,9 +111,9 @@ Sort options: `price` (cheapest first), `context` (largest first), `speed`/`thro
 Get per-provider latency, uptime, and throughput for any model:
 
 ```bash
-cd <skill-path>/scripts && npx tsx get-endpoints.ts "anthropic/claude-sonnet-4"
-cd <skill-path>/scripts && npx tsx get-endpoints.ts "anthropic/claude-sonnet-4" --sort throughput
-cd <skill-path>/scripts && npx tsx get-endpoints.ts "openai/gpt-4o" --sort latency
+cd <skill-path>/scripts && python get_endpoints.py "anthropic/claude-sonnet-4"
+cd <skill-path>/scripts && python get_endpoints.py "anthropic/claude-sonnet-4" --sort throughput
+cd <skill-path>/scripts && python get_endpoints.py "openai/gpt-4o" --sort latency
 ```
 
 Sort options: `throughput` (fastest tokens/sec first), `latency` (lowest p50 ms first), `uptime` (most reliable first), `price` (cheapest first)
@@ -151,11 +151,11 @@ Returns for each provider:
 
 The scripts below reformat the raw API data. When calling the API directly (e.g. via `fetch`), refer to the [OpenAPI spec](https://openrouter.ai/openapi.json) for field names.
 
-### list-models.ts / search-models.ts
+### list_models.py / search_models.py
 
 A subset of the raw API fields — the scripts run `formatModel()` which drops `canonical_slug`, `hugging_face_id`, `default_parameters`, `knowledge_cutoff`, and `links`. If you need those fields, call the API directly.
 
-### compare-models.ts
+### compare_models.py
 
 ```json
 {
@@ -175,7 +175,7 @@ A subset of the raw API fields — the scripts run `formatModel()` which drops `
 }
 ```
 
-### get-endpoints.ts
+### get_endpoints.py
 
 ```json
 {
@@ -218,7 +218,7 @@ A subset of the raw API fields — the scripts run `formatModel()` which drops `
 
 ## Presenting Results
 
-- When a user mentions a model by informal name, use `resolve-model.ts` first, then feed the resolved `id` into other scripts
+- When a user mentions a model by informal name, use `resolve_model.py` first, then feed the resolved `id` into other scripts
 - Convert pricing to per-million-tokens format for readability
 - When comparing, use a markdown table with models as columns
 - For provider endpoints, highlight the fastest (lowest p50 latency) and most reliable (highest uptime) providers

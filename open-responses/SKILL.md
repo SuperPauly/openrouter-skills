@@ -24,6 +24,57 @@ Open Responses is an open-source specification defining a unified HTTP protocol 
 
 ---
 
+## Python Quick Start
+
+```python
+import requests
+import os
+
+BASE_URL = "https://openrouter.ai/api/v1"
+HEADERS = {
+    "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
+    "Content-Type": "application/json",
+}
+
+# Basic Responses API call
+resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
+    "model": "openai/gpt-5-nano",
+    "input": "Hello!",
+})
+resp.raise_for_status()
+data = resp.json()
+print(data["output"][0]["content"][0]["text"])
+```
+
+### Python SSE Streaming
+
+```python
+import json
+import requests
+
+resp = requests.post(
+    f"{BASE_URL}/responses",
+    headers={**HEADERS, "Accept": "text/event-stream"},
+    json={"model": "openai/gpt-5-nano", "input": "Hello!", "stream": True},
+    stream=True,
+)
+for line in resp.iter_lines():
+    if not line:
+        continue
+    decoded = line.decode("utf-8")
+    if not decoded.startswith("data: "):
+        continue
+    payload = decoded[6:]
+    if payload == "[DONE]":
+        break
+    event = json.loads(payload)
+    if event.get("type") == "response.output_text.delta":
+        print(event.get("delta", ""), end="", flush=True)
+print()
+```
+
+---
+
 ## Reference Files
 
 For detailed schemas, JSON examples, and complete event catalogs, load the appropriate reference file:
@@ -302,6 +353,20 @@ The agentic loop is the core pattern for multi-step, tool-augmented workflows.
   ],
   "tools": [...]
 }
+```
+
+```python
+# Submit tool results and continue
+previous_response_id = "resp_100"
+tool_results = [
+    {"type": "function_call_output", "call_id": "call_paris", "output": '{"temperature": 18, "condition": "partly cloudy"}'},
+    {"type": "function_call_output", "call_id": "call_tokyo", "output": '{"temperature": 24, "condition": "sunny"}'},
+]
+resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
+    "model": "provider/model-name",
+    "previous_response_id": previous_response_id,
+    "input": tool_results,
+})
 ```
 
 **Turn 2 — Model synthesizes final answer (no function_call items = loop ends):**
