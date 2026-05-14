@@ -42,7 +42,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "Hello!",
 })
 resp.raise_for_status()
-data = resp.pyon()
+data = resp.json()
 print(data["output"][0]["content"][0]["text"])
 ```
 

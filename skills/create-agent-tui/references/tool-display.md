@@ -16,16 +16,16 @@ Three tool display styles are available, configured via `config.display.toolDisp
 Shared label mappings used by `grouped` and `minimal` styles:
 
 ```python
-# Python equivalent logic
-  shell: { past: 'Ran', noun: 'shell command' },
-  file_read: { past: 'Read', noun: 'file' },
-  file_write: { past: 'Wrote', noun: 'file' },
-  file_edit: { past: 'Edited', noun: 'file' },
-  glob: { past: 'Explored', noun: 'pattern' },
-  grep: { past: 'Searched', noun: 'pattern' },
-  list_dir: { past: 'Listed', noun: 'directory' },
-  web_search: { past: 'Fetched', noun: 'search' },
-# }
+TOOL_LABELS = {
+    "shell": {"past": "Ran", "noun": "shell command"},
+    "file_read": {"past": "Read", "noun": "file"},
+    "file_write": {"past": "Wrote", "noun": "file"},
+    "file_edit": {"past": "Edited", "noun": "file"},
+    "glob": {"past": "Explored", "noun": "pattern"},
+    "grep": {"past": "Searched", "noun": "pattern"},
+    "list_dir": {"past": "Listed", "noun": "directory"},
+    "web_search": {"past": "Fetched", "noun": "search"},
+}
 ```
 
 ---

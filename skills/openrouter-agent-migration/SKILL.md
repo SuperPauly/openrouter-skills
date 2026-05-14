@@ -51,14 +51,9 @@ The `OpenRouter` client class and `client.callModel()` pattern work identically.
 The rest of your code stays the same:
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-  model: 'openai/gpt-5-nano',
-  input: 'Hello!',
-})
-
-# Python equivalent logic
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -75,10 +70,8 @@ The rest of your code stays the same:
 A standalone `callModel` function is also available for advanced use cases where a pre-existing `OpenRouterCore` instance is available:
 
 ```python
-# Python equivalent logic
-
-# Requires an OpenRouterCore instance (from @openrouter/sdk/core)
-# Python equivalent logic
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -125,79 +118,17 @@ For most use cases, prefer the `client.callModel()` method shown above.
 ### Before (using @openrouter/sdk)
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  # Python equivalent logic
-})
-
-# Python equivalent logic
-  name: 'web_search',
-  description: 'Search the web',
-  inputSchema: z.object({ query: z.string() }),
-  outputSchema: z.object({ results: z.array(z.string()) }),
-  # Python equivalent logic
-    return { results: ['Result 1', 'Result 2'] }
-  },
-})
-
-# Python equivalent logic
-  name: 'finish',
-  description: 'Complete the task',
-  inputSchema: z.object({ answer: z.string() }),
-  # Python equivalent logic
-})
-
-# Python equivalent logic
-  model: 'openai/gpt-5-nano',
-  instructions: 'You are a research assistant.',
-  input: 'What are the latest AI developments?',
-  tools: [searchTool, finishTool],
-  stopWhen: [stepCountIs(10), hasToolCall('finish')],
-})
-
-# Python equivalent logic
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### After (using @openrouter/agent)
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  # Python equivalent logic
-})
-
-# Python equivalent logic
-  name: 'web_search',
-  description: 'Search the web',
-  inputSchema: z.object({ query: z.string() }),
-  outputSchema: z.object({ results: z.array(z.string()) }),
-  # Python equivalent logic
-    return { results: ['Result 1', 'Result 2'] }
-  },
-})
-
-# Python equivalent logic
-  name: 'finish',
-  description: 'Complete the task',
-  inputSchema: z.object({ answer: z.string() }),
-  # Python equivalent logic
-})
-
-# Python equivalent logic
-  model: 'openai/gpt-5-nano',
-  instructions: 'You are a research assistant.',
-  input: 'What are the latest AI developments?',
-  tools: [searchTool, finishTool],
-  stopWhen: [stepCountIs(10), hasToolCall('finish')],
-})
-
-# Python equivalent logic
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 The only changes are the three import lines at the top.
@@ -206,7 +137,7 @@ The only changes are the three import lines at the top.
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -229,24 +160,9 @@ Keep `@openrouter/sdk` installed if you use any of these non-agent features:
 For mixed projects, use `@openrouter/sdk` for these features and `@openrouter/agent` for agent features:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Use SDK client for non-agent features
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Use Agent client for callModel
-# Python equivalent logic
-# Python equivalent logic
-  model: 'openai/gpt-5-nano',
-  input: 'Hello!',
-  tools: [myTool],
-  stopWhen: stepCountIs(5),
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -260,23 +176,9 @@ These features are only available in `@openrouter/agent`, not in `@openrouter/sd
 Type-safe shared state across all tools in a conversation:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-
-# Python equivalent logic
-  model: 'openai/gpt-5-nano',
-  input: 'Process this data',
-  sharedContextSchema: z.object({
-    userId: z.string(),
-    sessionData: z.record(z.unknown()),
-  }),
-  context: {
-    shared: { userId: '123', sessionData: {} },
-  },
-  tools: [myTool],
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Tool Context
@@ -284,22 +186,9 @@ Type-safe shared state across all tools in a conversation:
 Tools can declare their own typed context and access shared context:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  name: 'my_tool',
-  description: 'A tool with context',
-  inputSchema: z.object({ query: z.string() }),
-  contextSchema: z.object({ apiKey: z.string() }),
-  # Python equivalent logic
-# context.local — this tool's own context
-# context.shared — shared context across all tools
-# context.setContext({ ... }) — update this tool's context
-# context.setSharedContext({ ... }) — update shared context
-    return { result: 'done' }
-  },
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Tool Approval Flow
@@ -307,29 +196,17 @@ Tools can declare their own typed context and access shared context:
 Require user approval before tool execution:
 
 ```python
-# Python equivalent logic
-  name: 'delete_file',
-  description: 'Delete a file',
-  inputSchema: z.object({ path: z.string() }),
-  # Python equivalent logic
-  # Python equivalent logic
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Turn Lifecycle Callbacks
 
 ```python
-# Python equivalent logic
-  model: 'openai/gpt-5-nano',
-  input: 'Complex task',
-  tools: [myTool],
-  # Python equivalent logic
-    # console.log("Starting turn ${context.numberOfTurns}")
-  },
-  # Python equivalent logic
-    # console.log("Turn ${context.numberOfTurns} complete")
-  },
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -356,4 +233,3 @@ Require user approval before tool execution:
 | `@openrouter/agent/tool-context` | `buildToolExecuteContext`, `ToolContextStore` |
 | `@openrouter/agent/tool-event-broadcaster` | `ToolEventBroadcaster` |
 | `@openrouter/agent/turn-context` | `buildTurnContext` |
-

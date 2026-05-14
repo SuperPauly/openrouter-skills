@@ -108,23 +108,15 @@ inputSchema: z.object({
 Generate this as a starting point for domain-specific tools:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
+TOOL = {
+    "name": "my_tool",
+    "description": "Describe what this tool does",
+    "requireApproval": True,
+}
 
-# Python equivalent logic
-  name: 'my_tool',
-  description: 'Describe what this tool does',
-  inputSchema: z.object({
-# Define your input parameters here
-    param: z.string().describe('Description of the parameter'),
-  }),
-# # Optional: require user approval before execution
-# requireApproval: True,
-  # Python equivalent logic
-# Implement your tool logic here
-    return { result: 'done' }
-  },
-})
+
+def execute_tool(param: str) -> dict:
+    return {"result": "done", "param": param}
 ```
 
 ---
@@ -145,11 +137,11 @@ Persistent Python REPL with top-level await.
 Spawn a child agent to handle a delegated task.
 
 ```python
-inputSchema: z.object({
-  task: z.string().describe('Short name for the task'),
-  message: z.string().describe('Detailed instructions for the sub-agent'),
-  model: z.string().optional().describe('Model override for the sub-agent'),
-})
+INPUT_SCHEMA = {
+    "task": "Short name for the task",
+    "message": "Detailed instructions for the sub-agent",
+    "model": "Optional model override",
+}
 ```
 
 - **Behavior**: Create a new `OpenRouter` client, call `callModel` with the message and a subset of tools. Return the sub-agent's final text response.
@@ -161,12 +153,11 @@ inputSchema: z.object({
 Track multi-step task progress.
 
 ```python
-inputSchema: z.object({
-  items: z.array(z.object({
-    step: z.string().describe('Description of the step'),
-    # status: z.enum(['pending', 'in_progress', 'completed']),
-  })),
-})
+PLAN_SCHEMA = {
+    "items": [
+        {"step": "Description of the step", "status": "pending"}
+    ]
+}
 ```
 
 - **Behavior**: Store the plan in memory (or a file). Validate that at most one item is `in_progress`. Return the updated plan. The model calls this tool to update progress as it works.

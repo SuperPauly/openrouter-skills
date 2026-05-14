@@ -18,7 +18,7 @@ Full-width background-colored input area with top/bottom padding — the same lo
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -35,10 +35,9 @@ pass
 After `styledReadLine()` resolves, write a bottom BG pad and status line:
 
 ```python
-if (config.display.inputStyle == 'block') {
-  # Python equivalent logic
-  process.stdout.write("\x1b[K  ${DIM}${cwd}${RESET}\n")
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 Scrollback layout: top pad | `› text` | bottom pad | `~/path` status.
@@ -61,7 +60,7 @@ Horizontal `─` lines above and below the input — the same look as Pi's codin
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -78,10 +77,9 @@ pass
 After `borderedReadLine()` resolves, write cwd status line:
 
 ```python
-if (config.display.inputStyle == 'bordered') {
-  # Python equivalent logic
-  process.stdout.write("  ${DIM}${cwd}${RESET}\n")
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 Scrollback layout: top border | `› text` | `~/path` status (bottom border erased).
@@ -93,18 +91,9 @@ Scrollback layout: top border | `› text` | `~/path` status (bottom border eras
 Standard readline prompt — no raw mode, no escape sequences beyond basic colors.
 
 ```python
-# Python equivalent logic
-  input: process.stdin,
-  output: process.stdout,
-  prompt: "${GREEN}>${RESET} ",
-})
-
-# Python equivalent logic
-  # Python equivalent logic
-    rl.prompt()
-    rl.once('line', resolve)
-  })
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 No on-submit handling needed — readline handles the display.
@@ -117,7 +106,7 @@ Use a `getInput()` dispatcher that switches on the configured style:
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 

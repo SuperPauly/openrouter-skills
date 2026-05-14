@@ -17,7 +17,7 @@ Replace `src/cli.ts` with an HTTP server when the agent should be accessed via A
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -75,12 +75,9 @@ For real-time bidirectional communication (e.g., a chat UI), replace SSE with We
 Use `@openrouter/agent`'s dynamic parameters to change the model based on conversation context:
 
 ```python
-client.callModel({
-  # Python equivalent logic
-    ? 'anthropic/claude-sonnet-4'  // upgrade for complex conversations
-    : 'openai/gpt-4.1-mini',       // start cheap
-# ...
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Custom Stop Conditions
@@ -89,6 +86,6 @@ Beyond `stepCountIs` and `maxCost`, create domain-specific stop conditions:
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```

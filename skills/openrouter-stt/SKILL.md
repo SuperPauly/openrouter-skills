@@ -207,7 +207,7 @@ def transcribe(audio_path: str, model: str, api_key: str) -> dict:
         },
     )
     resp.raise_for_status()
-    return resp.pyon()
+    return resp.json()
 
 
 def main() -> None:

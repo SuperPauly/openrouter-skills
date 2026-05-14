@@ -292,7 +292,7 @@ class AgentConfig:
 
 def load_config(overrides: dict | None = None) -> AgentConfig:
     config = AgentConfig()
-    config_path = Path("agent.config.pyon")
+    config_path = Path("agent.config.json")
     if config_path.exists():
         file = json.loads(config_path.read_text())
         if "display" in file:
@@ -392,7 +392,7 @@ def run_agent(
 
         resp = requests.post(f"{BASE_URL}/responses", headers=headers, json=payload)
         resp.raise_for_status()
-        data = resp.pyon()
+        data = resp.json()
 
         previous_response_id = data.get("id")
         usage = data.get("usage")

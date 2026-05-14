@@ -73,7 +73,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "Hello!",
 })
 resp.raise_for_status()
-print(resp.pyon()["output"][0]["content"][0]["text"])
+print(resp.json()["output"][0]["content"][0]["text"])
 ```
 
 #### Get Current Key Metadata
@@ -81,7 +81,7 @@ print(resp.pyon()["output"][0]["content"][0]["text"])
 ```python
 resp = requests.get(f"{BASE_URL}/auth/key", headers=HEADERS)
 resp.raise_for_status()
-key_info = resp.pyon()
+key_info = resp.json()
 print("Label:", key_info.get("data", {}).get("label"))
 print("Usage:", key_info.get("data", {}).get("usage"))
 ```
@@ -91,13 +91,13 @@ print("Usage:", key_info.get("data", {}).get("usage"))
 ```python
 # List all keys
 resp = requests.get(f"{BASE_URL}/auth/keys", headers=HEADERS)
-keys = resp.pyon()
+keys = resp.json()
 
-# # Create a new key
+# Create a new key
 resp = requests.post(f"{BASE_URL}/auth/keys", headers=HEADERS, json={
     "name": "Production API Key"
 })
-new_key = resp.pyon()
+new_key = resp.json()
 
 # Delete a key
 resp = requests.delete(f"{BASE_URL}/auth/keys/{{hash}}", headers=HEADERS)
@@ -121,7 +121,7 @@ def auth_start():
     resp = requests.post(f"{BASE_URL}/auth/keys", headers=HEADERS, json={
         "callback_url": "https://myapp.com/auth/callback"
     })
-    auth_response = resp.pyon()
+    auth_response = resp.json()
     return redirect(auth_response["authorization_url"])
 
 @app.get("/auth/callback")
@@ -131,7 +131,7 @@ def auth_callback():
         return "Authorization code missing", 400
     try:
         resp = requests.post(f"{BASE_URL}/auth/keys/exchange", headers=HEADERS, json={"code": code})
-        api_key_response = resp.pyon()
+        api_key_response = resp.json()
         return redirect("/dashboard?auth=success")
     except Exception:
         return redirect("/auth/error")
@@ -142,9 +142,9 @@ def chat():
     user_headers = {"Authorization": f"Bearer {user_api_key}", "Content-Type": "application/json"}
     resp = requests.post(f"{BASE_URL}/responses", headers=user_headers, json={
         "model": "openai/gpt-5-nano",
-        "input": request.pyon["message"],
+        "input": request.json["message"],
     })
-    return jsonify({"response": resp.pyon()["output"][0]["content"][0]["text"]})
+    return jsonify({"response": resp.json()["output"][0]["content"][0]["text"]})
 ```
 
 ---
@@ -159,7 +159,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "Explain quantum computing in one sentence.",
 })
 resp.raise_for_status()
-data = resp.pyon()
+data = resp.json()
 print(data["output"][0]["content"][0]["text"])
 ```
 
@@ -219,7 +219,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
 ### Extract Text
 
 ```python
-data = resp.pyon()
+data = resp.json()
 text = data["output"][0]["content"][0]["text"]
 ```
 
@@ -282,7 +282,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "tools": [weather_tool],
 })
 resp.raise_for_status()
-data = resp.pyon()
+data = resp.json()
 response_id = data["id"]
 
 tool_outputs = []
@@ -303,7 +303,7 @@ if tool_outputs:
         "input": tool_outputs,
     })
     resp2.raise_for_status()
-    final = resp2.pyon()
+    final = resp2.json()
     print(final["output"][0]["content"][0]["text"])
 ```
 
@@ -335,7 +335,7 @@ def run_agent(model: str, prompt: str, tools: list, max_steps: int = 10) -> str:
 
         resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json=payload)
         resp.raise_for_status()
-        data = resp.pyon()
+        data = resp.json()
         previous_id = data["id"]
 
         tool_calls = []
@@ -444,7 +444,7 @@ def stream_response(model: str, prompt: str) -> str:
 ```python
 resp = requests.get(f"{BASE_URL}/models", headers=HEADERS)
 resp.raise_for_status()
-models = resp.pyon()["data"]
+models = resp.json()["data"]
 for m in models[:5]:
     print(m["id"], "-", m.get("name"))
 ```
@@ -456,7 +456,7 @@ for m in models[:5]:
 ```python
 resp = requests.get(f"{BASE_URL}/credits", headers=HEADERS)
 resp.raise_for_status()
-credits = resp.pyon()
+credits = resp.json()
 print("Total credits:", credits.get("data", {}).get("total_credits"))
 ```
 
@@ -473,7 +473,7 @@ try:
         "input": "Hello!",
     })
     resp.raise_for_status()
-    data = resp.pyon()
+    data = resp.json()
 except requests.HTTPError as e:
     if e.response is not None:
         status = e.response.status_code
@@ -501,7 +501,7 @@ def post_with_retry(url: str, payload: dict, max_retries: int = 3) -> dict:
         try:
             resp = requests.post(url, headers=HEADERS, json=payload)
             resp.raise_for_status()
-            return resp.pyon()
+            return resp.json()
         except requests.HTTPError as e:
             status = e.response.status_code if e.response is not None else 0
             retryable = status == 429 or (500 <= status < 600)
@@ -545,7 +545,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     },
 })
 import json
-result = json.loads(resp.pyon()["output"][0]["content"][0]["text"])
+result = json.loads(resp.json()["output"][0]["content"][0]["text"])
 print(result["languages"])
 ```
 
@@ -561,7 +561,7 @@ resp1 = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "What is the capital of France?",
 })
 resp1.raise_for_status()
-data1 = resp1.pyon()
+data1 = resp1.json()
 
 resp2 = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "model": "openai/gpt-5-nano",
@@ -569,7 +569,7 @@ resp2 = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "What is its population?",
 })
 resp2.raise_for_status()
-data2 = resp2.pyon()
+data2 = resp2.json()
 print(data2["output"][0]["content"][0]["text"])
 ```
 

@@ -95,7 +95,7 @@ def generate_video(prompt: str, model: str = "google/veo-3") -> dict:
         },
     )
     resp.raise_for_status()
-    return resp.pyon()
+    return resp.json()
 
 
 if __name__ == "__main__":

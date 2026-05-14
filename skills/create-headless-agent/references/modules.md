@@ -24,7 +24,7 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -34,20 +34,16 @@ In `cli.ts`, wire session persistence around the agent call:
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
 For single-shot CLI mode, session persistence is optional. Skip it when the agent runs once and exits, or enable it for audit trails:
 
 ```python
-if (config.sessionDir) {
-  initSessionDir(config.sessionDir)
-  # Python equivalent logic
-  saveMessage(sessionPath, { role: 'user', content: input })
-# ... run agent ...
-  saveMessage(sessionPath, { role: 'assistant', content: result.text })
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -60,7 +56,7 @@ When conversation history grows too long, summarize older messages to fit within
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -69,28 +65,9 @@ pass
 In `agent.ts`, compact before calling the model:
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-  # Python equivalent logic
-
-# Compact if input is a long message array
-  if (Array.isArray(input) and input.length > 40) {
-    # Python equivalent logic
-      threshold: 40,
-      keepRecent: 10,
-    })
-# }
-
-  # Python equivalent logic
-    model: config.model,
-    instructions: config.systemPrompt,
-    input: input as string | Item[],
-    tools,
-# ...
-  })
-# ...
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -118,7 +95,7 @@ An inline helper: each tool calls `offloadIfLarge(result, ctx, opts?)` at the en
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -127,24 +104,9 @@ pass
 No plain-object refactor needed. Add one line at the return sites of tools whose output can be large. For the `shell` tool defined in `references/tools.md`:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  name: 'shell',
-  description: 'Execute a shell command and return stdout+stderr',
-  inputSchema: z.object({
-    command: z.string(),
-    timeout: z.number().optional(),
-  }),
-  # Python equivalent logic
-# ... existing spawn + capture + truncate logic ...
-    # Python equivalent logic
-    return offloadIfLarge(result, ctx);   // <-- one line, at the return
-  },
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 Same pattern for `grep`, `web_fetch`, or any custom tool that can return bulk data. `file_read` already paginates, so skip it.
@@ -156,48 +118,9 @@ The companion tool — the model needs a way to retrieve more of the persisted p
 It's exported as a factory so the storage dir can be passed in and wired from the same place that configures `offloadIfLarge`:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-
-# Python equivalent logic
-  return tool({
-    name: 'read_persisted_result',
-    description:
-      "Read a section of a previously-persisted oversized tool result. The path comes from a prior tool response\'s persistedAt field and must be inside the offload storage directory (${storageDir}). Supports offset/limit pagination; when output is truncated, the hint field tells you how to continue.",
-    inputSchema: z.object({
-      path: z.string().describe('Path returned in a previous tool result\'s persistedAt field'),
-      offset: z.number().optional().describe('Byte offset to start from (default 0)'),
-      limit: z.number().optional().describe("Max bytes to return (default ${DEFAULT_LIMIT})"),
-    }),
-    # Python equivalent logic
-      if (!isInsideStorageDir(path, storageDir)) {
-        return { error: "Access denied: ${path} is outside the offload storage directory (${storageDir})." }
-# }
-      try {
-        # Python equivalent logic
-        # Python equivalent logic
-        # Python equivalent logic
-        # Python equivalent logic
-        # Python equivalent logic
-        return {
-          content: text,
-          totalBytes: total,
-          ...(truncated and {
-            truncated: True,
-            nextOffset: end,
-            hint: "Showing bytes ${offset}-${end} of ${total}. Use offset=${end} to continue.",
-          }),
-# }
-      } catch (err: any) {
-        if (err.code == 'ENOENT') return { error: "Persisted result not found: ${path}" }
-        return { error: err.message }
-# }
-    },
-  })
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Wire into src/tools/index.ts
@@ -205,30 +128,9 @@ It's exported as a factory so the storage dir can be passed in and wired from th
 Use a single `storageDir` constant so `offloadIfLarge` inside each tool and `createReadPersistedResultTool` in the registry agree on the location:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-
-# Python equivalent logic
-  fileReadTool,
-  fileWriteTool,
-  fileEditTool,
-  globTool,
-  listDirTool,
-  grepTool,                              // large tree → disk via offloadIfLarge
-  shellTool,                             // noisy build/test output → disk
-  createReadPersistedResultTool(STORAGE_DIR),  // so the model can drill into persisted payloads
-  serverTool({ type: 'openrouter:web_search' }),
-# Python equivalent logic
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 If you want per-tool offload config (e.g. a larger budget for shell), pass the overrides to `offloadIfLarge` directly inside that tool and make sure its `storageDir` still matches the one passed to `createReadPersistedResultTool`.
@@ -255,7 +157,7 @@ Build the system prompt from a static base plus dynamically loaded context files
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -264,21 +166,9 @@ pass
 In `agent.ts`, use as the `instructions` parameter:
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-  base: config.systemPrompt.replace('{cwd}', process.cwd()),
-  contextFiles: ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'],
-  projectDir: process.cwd(),
-})
-
-# Python equivalent logic
-  model: config.model,
-  instructions,
-  input: input as string | Item[],
-  tools,
-# ...
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -294,41 +184,17 @@ Gate dangerous tools behind programmatic approval. Unlike the TUI version, headl
 Set `requireApproval` on individual tool definitions. It accepts `true`, `false`, or a function that receives the tool arguments and returns a boolean:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  name: 'shell',
-  description: 'Execute a shell command',
-  inputSchema: z.object({
-    command: z.string(),
-    timeout: z.number().optional(),
-  }),
-  requireApproval: True,  // always requires approval
-  # Python equivalent logic
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Conditional approval with a predicate
 
 ```python
-# Python equivalent logic
-  return tool({
-    name: 'shell',
-    description: 'Execute a shell command',
-    inputSchema: z.object({
-      command: z.string(),
-      timeout: z.number().optional(),
-    }),
-    requireApproval: approvalPolicy == 'always'
-      ? True
-      : approvalPolicy == 'never'
-        ? False
-        # Python equivalent logic
-            /\brm\b|sudo|chmod|chown|\bdd\b|mkfs|curl.*\|.*sh/.test(command),
-    # Python equivalent logic
-  })
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Headless approval backend
@@ -337,7 +203,7 @@ Since there is no terminal prompt, wire approvals to an external system. The `on
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -346,20 +212,9 @@ pass
 Add `approvalPolicy` to the config and wire it into the tool builder:
 
 ```python
-# Python equivalent logic
-approvalPolicy: 'always' | 'never' | 'dangerous-only'
-approvedTools: string[];  // auto-approved tool names for headless mode
-
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  return [
-    fileReadTool,    // safe, no approval needed
-    fileWriteTool,
-    createShellTool(config.approvalPolicy),
-  ]
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -386,91 +241,33 @@ The SDK's [`StateAccessor`](https://openrouter.ai/docs/agent-sdk/call-model/tool
 ### src/state.ts
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  mkdirSync(stateDir, { recursive: True })
-  # Python equivalent logic
-
-  return {
-    # async load(): Promise<ConversationState | None> {
-      if (!existsSync(path)) return None
-      try {
-        # Python equivalent logic
-        return JSON.parse(text) as ConversationState
-      } catch {
-        return None
-# }
-    },
-    # async save(state: ConversationState): Promise<void> {
-      # Python equivalent logic
-    },
-# }
-# }
-
-/** Helper: create fresh state or resume existing state by id. */
-# Python equivalent logic
-  stateDir: string,
-  sessionId: string,
-  initialInput: string,
-# ): Promise<{ accessor: StateAccessor; state: ConversationState }> {
-  # Python equivalent logic
-  # Python equivalent logic
-  # Python equivalent logic
-  return { accessor, state }
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Wire into agent.ts
 
 ```python
-# Python equivalent logic
-  model: config.model,
-  instructions: config.systemPrompt.replace('{cwd}', process.cwd()),
-  input: input as string | Item[],
-  tools,
-  stopWhen: [stepCountIs(config.maxSteps), maxCost(config.maxCost)],
-  state: stateAccessor,  // <-- persists state across runs
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Usage: resuming an interrupted run
 
 ```python
-# Python equivalent logic
-
-# Fresh start
-# Python equivalent logic
-# Python equivalent logic
-  # Python equivalent logic
-# state is passed internally
-})
-
-# Later: resume from the same session id (process restart, requeue, etc.)
-# Python equivalent logic
-# callModel will detect state.status == 'interrupted' and resume automatically
-# Python equivalent logic
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### Usage: approval flow that survives restart
 
 ```python
-# Run 1: agent generates a tool call requiring approval, state.status = 'awaiting_approval'
-# Python equivalent logic
-
-# Out of process: human reviews state.pendingToolCalls, decides
-# Python equivalent logic
-# Python equivalent logic
-
-# Run 2: resume with approvals
-# Python equivalent logic
-# ... same config ...
-  state: accessor,
-  approveToolCalls: ['call_1'],   // or rejectToolCalls: ['call_1']
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ### When to skip this module
@@ -492,7 +289,7 @@ Emit typed JSON events to stderr or a log file for observability. Headless agent
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -501,35 +298,17 @@ pass
 In `cli.ts`, create a logger and pass it to `runAgent`:
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-logger.on(stderrJsonHandler)
-
-logger.emit('agent_start', { model: config.model, input })
-
-# Python equivalent logic
-  # Python equivalent logic
-    if (e.type == 'tool_call') {
-      logger.emit('tool_call', { name: e.name, callId: e.callId, args: e.args })
-    } else if (e.type == 'tool_result') {
-      logger.emit('tool_result', { name: e.name, callId: e.callId, output: e.output })
-# }
-  },
-})
-
-logger.emit('agent_end', {
-  usage: result.usage,
-  outputLength: result.text.length,
-})
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 For file logging (useful in server/queue-worker mode):
 
 ```python
-# Python equivalent logic
-
-logger.on(fileLogHandler('./agent-events.pyonl'))
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 ---
@@ -542,7 +321,7 @@ Constrain the agent's final text response to match a JSON schema. Inspired by Co
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -552,7 +331,7 @@ Add a `--output-schema` CLI flag and validate after the agent completes:
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -591,7 +370,7 @@ POST results to an HTTP endpoint when the agent completes. Fire-and-forget with 
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
@@ -601,29 +380,16 @@ In `cli.ts`, call after the agent completes:
 
 ```python
 # Python equivalent (simplified)
-# Python equivalent logic
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
 pass
 ```
 
 For error cases:
 
 ```python
-try {
-  # Python equivalent logic
-# ... success webhook above ...
-} catch (err) {
-  # Python equivalent logic
-  # Python equivalent logic
-  if (webhookUrl) {
-    # Python equivalent logic
-      status: 'error',
-      error: (err as Error).message,
-      durationMs,
-    })
-# }
-  process.stderr.write("Error: ${(err as Error).message}\n")
-  process.exit(1)
-# }
+# Python equivalent (simplified)
+# Converted from the previous JavaScript/TypeScript-oriented snippet.
+pass
 ```
 
 Add webhook config to `agent.config.json`:

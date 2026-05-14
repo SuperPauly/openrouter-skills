@@ -122,23 +122,15 @@ Fetch a web page and extract text content.
 Generate this as a starting point for domain-specific tools:
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
+TOOL = {
+    "name": "my_tool",
+    "description": "Describe what this tool does",
+    "requireApproval": True,
+}
 
-# Python equivalent logic
-  name: 'my_tool',
-  description: 'Describe what this tool does',
-  inputSchema: z.object({
-# Define your input parameters here
-    param: z.string().describe('Description of the parameter'),
-  }),
-# # Optional: require user approval before execution
-# requireApproval: True,
-  # Python equivalent logic
-# Implement your tool logic here
-    return { result: 'done' }
-  },
-})
+
+def execute_tool(param: str) -> dict:
+    return {"result": "done", "param": param}
 ```
 
 ---

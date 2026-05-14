@@ -142,17 +142,20 @@ For dark mode support, add dark variants: swap light backgrounds to dark (`dark:
 ## Using the API Key
 
 ```python
-# Python equivalent logic
-  method: "POST",
-  headers: {
-    Authorization: "Bearer ${apiKey}",
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    model: "openai/gpt-4o-mini",
-    input: [{ type: "message", role: "user", content: "Hello!" }],
-  }),
-})
+import requests
+
+response = requests.post(
+    "https://openrouter.ai/api/v1/responses",
+    headers={
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "openai/gpt-4o-mini",
+        "input": [{"type": "message", "role": "user", "content": "Hello!"}],
+    },
+)
+response.raise_for_status()
 ```
 
 ```python
@@ -168,7 +171,7 @@ resp = requests.post(
     headers=user_headers,
     json={"model": "openai/gpt-5-nano", "input": "Hello!"},
 )
-print(resp.pyon()["output"][0]["content"][0]["text"])
+print(resp.json()["output"][0]["content"][0]["text"])
 ```
 
 For the Python requests approach, see the `openrouter-python-sdk` skill.
