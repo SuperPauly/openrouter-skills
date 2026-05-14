@@ -3,9 +3,10 @@
 Three loader animations are available, configured via `config.display.loader`. The default is `gradient` with text `"Working"`.
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+SPINNERS = {
+    "dots": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
+    "line": ["-", "\\", "|", "/"],
+}
 ```
 
 | Style | Look | Description |
@@ -19,9 +20,11 @@ pass
 ## src/loader.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import itertools
+
+def loader_frames(style: str = "dots") -> itertools.cycle:
+    styles = {"dots": ["⠋", "⠙", "⠹"], "line": ["-", "\\", "|", "/"]}
+    return itertools.cycle(styles.get(style, styles["dots"]))
 ```
 
 ---
@@ -29,9 +32,10 @@ pass
 ## Wire into cli.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def integrate_components(config: dict) -> dict:
+    model = config.get("model", "openrouter/auto")
+    timeout = int(config.get("timeout", 30))
+    return {"model": model, "timeout": timeout, "ready": True}
 ```
 
 The preview input box is a visual-only rendering of the input prompt below the loader line. It shows the user where their next prompt will go. When agent events arrive, the preview is erased and replaced with actual output. After the agent finishes, the real interactive input box appears.

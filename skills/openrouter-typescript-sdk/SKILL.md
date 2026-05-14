@@ -263,9 +263,13 @@ print()
 ### Defining Tools
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def get_weather(city: str) -> str:
+    return f"Weather for {city}: 21C and clear"
+
+TOOLS = [{
+    "name": "get_weather",
+    "description": "Return current weather for a city",
+}]
 ```
 
 ### Using Tools with the Responses API
@@ -594,7 +598,16 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
 ## Complete Working Example
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import os
+import requests
+
+def run_example(prompt: str) -> str:
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}"},
+        json={"model": "openai/gpt-4o-mini", "messages": [{"role": "user", "content": prompt}]},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
 ```

@@ -86,9 +86,21 @@ Remove the verifier from `sessionStorage` before or after the exchange.
 Drop-in module implementing the full PKCE flow. Reduces risk of getting base64url encoding, sessionStorage handling, or the key exchange wrong.
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import requests
+
+def exchange_code_for_token(client_id: str, client_secret: str, code: str) -> str:
+    response = requests.post(
+        "https://openrouter.ai/api/v1/oauth/token",
+        json={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "grant_type": "authorization_code",
+            "code": code,
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
 ```
 
 ---

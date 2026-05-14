@@ -19,9 +19,13 @@ The primary entry point. Accepts a prompt via `--prompt`, positional argument, o
 The `#!/usr/bin/env bun` shebang on line 1 is required so the OS can execute the file directly when it's invoked via the `bin` symlink created by `bun link`. Without it, the linked binary fails with "Exec format error".
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import argparse
+
+def parse_cli_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", default="openrouter/auto")
+    parser.add_argument("--session-id")
+    return parser.parse_args()
 ```
 
 ### Exit codes
@@ -83,9 +87,16 @@ A `Bun.serve()` HTTP server that exposes the agent over a REST API with optional
 ### src/server.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        body = json.dumps({"ok": True}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
 ```
 
 ### Usage
@@ -145,46 +156,16 @@ Expose the agent as an MCP tool so other agents (including Claude Code) can call
 ### src/mcp-server.ts
 
 ```python
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
-# Python equivalent logic
+from dataclasses import dataclass
 
-# Python equivalent logic
+@dataclass
+class RunAgentRequest:
+    prompt: str
+    model: str | None = None
 
-# Python equivalent logic
-  name: config.name ?? 'headless-agent',
-  version: '1.0.0',
-})
-
-server.tool(
-  'run_agent',
-  'Send a prompt to the agent and get a text response',
-# {
-    prompt: z.string().describe('The prompt to send to the agent'),
-    model: z.string().optional().describe('Override the model (e.g. anthropic/claude-sonnet-4)'),
-  },
-  # Python equivalent logic
-    # Python equivalent logic
-    if (model) runConfig.model = model
-
-    try {
-      # Python equivalent logic
-      return {
-        # Python equivalent logic
-# }
-    } catch (err: any) {
-      return {
-        # Python equivalent logic
-        isError: True,
-# }
-# }
-  },
-)
-
-# Python equivalent logic
-# Python equivalent logic
+def run_agent_tool(request: RunAgentRequest) -> dict:
+    selected_model = request.model or "openrouter/auto"
+    return {"model": selected_model, "output": f"Processed: {request.prompt}"}
 ```
 
 ### Dependencies

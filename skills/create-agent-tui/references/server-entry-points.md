@@ -16,9 +16,16 @@ Replace `src/cli.ts` with an HTTP server when the agent should be accessed via A
 ### src/server.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        body = json.dumps({"ok": True}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
 ```
 
 ### Usage
@@ -75,9 +82,10 @@ For real-time bidirectional communication (e.g., a chat UI), replace SSE with We
 Use `@openrouter/agent`'s dynamic parameters to change the model based on conversation context:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def choose_model(message_count: int) -> str:
+    if message_count > 20:
+        return "anthropic/claude-3.5-haiku"
+    return "openai/gpt-4o-mini"
 ```
 
 ### Custom Stop Conditions
@@ -85,7 +93,6 @@ pass
 Beyond `stepCountIs` and `maxCost`, create domain-specific stop conditions:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def should_stop(response_text: str, steps: int) -> bool:
+    return steps >= 8 or "FINAL_ANSWER" in response_text
 ```

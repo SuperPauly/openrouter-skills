@@ -19,9 +19,8 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 ### src/session.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def session_status(session_id: str, turns: int) -> str:
+    return f"session={session_id} turns={turns}"
 ```
 
 ### Integration
@@ -29,9 +28,8 @@ pass
 In `cli.ts`, wrap the message loop:
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def configure_session_loop(config: dict) -> dict:
+    return {"session_enabled": config.get("session", True), "auto_save": True}
 ```
 
 ---
@@ -43,9 +41,9 @@ When conversation history grows too long, summarize older messages to fit within
 ### src/compaction.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def compact_messages(messages: list[str], keep_last: int = 6) -> str:
+    tail = messages[-keep_last:]
+    return "\n".join(f"- {line}" for line in tail)
 ```
 
 ### Integration
@@ -53,17 +51,11 @@ pass
 In `agent.ts`, call before `callModel`:
 
 ```python
-# Python equivalent logic
-
-# Inside runAgent, when input is a message array, compact before calling callModel:
-if (Array.isArray(input)) {
-  # Python equivalent logic
-  # Python equivalent logic
-    threshold: 40,
-    keepRecent: 10,
-  })
-# }
-# Then pass input to callModel as usual
+def maybe_compact_input(input_messages: list[str]) -> list[str]:
+    if len(input_messages) <= 40:
+        return input_messages
+    summary = compact_messages(input_messages[:-10], keep_last=6)
+    return [summary, *input_messages[-10:]]
 ```
 
 ---
@@ -75,9 +67,13 @@ Compose the system prompt from a static base plus dynamically loaded context fil
 ### src/system-prompt.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def build_system_prompt(project: str, objective: str) -> str:
+    lines = [
+        f"Project: {project}",
+        f"Objective: {objective}",
+        "Be concise and safe.",
+    ]
+    return "\n".join(lines)
 ```
 
 ### Integration
@@ -85,16 +81,16 @@ pass
 In `agent.ts`, use as the `instructions` parameter:
 
 ```python
-# Python equivalent logic
+from pathlib import Path
 
-# Python equivalent logic
-  base: config.systemPrompt,
-  contextFiles: ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'],
-  projectDir: process.cwd(),
-})
-
-# Pass to callModel:
-client.callModel({ instructions, ... })
+def compose_instructions(base_prompt: str, project_dir: Path) -> str:
+    context_files = ["AGENTS.md", "CLAUDE.md", ".agent-context.md"]
+    context = []
+    for name in context_files:
+        path = project_dir / name
+        if path.exists():
+            context.append(path.read_text())
+    return "\n\n".join([base_prompt, *context]).strip()
 ```
 
 ---
@@ -108,31 +104,24 @@ Gate dangerous tools behind user confirmation. Uses `requireApproval` from `@ope
 For tools that should require approval, set `requireApproval: true` in the tool definition:
 
 ```python
-# Python equivalent logic
-  name: 'shell',
-  description: 'Execute a shell command',
-  inputSchema: z.object({ command: z.string(), timeout: z.number().optional() }),
-  requireApproval: True,  // <-- user must confirm before execution
-  # Python equivalent logic
-})
+shell_tool = {
+    "name": "shell",
+    "description": "Execute a shell command",
+    "input_schema": {"command": "str", "timeout": "int | None"},
+    "require_approval": True,
+}
 ```
 
 Or use a function for conditional approval based on the config:
 
 ```python
-# Python equivalent logic
-  return tool({
-    name: 'shell',
-    description: 'Execute a shell command',
-    inputSchema: z.object({ command: z.string(), timeout: z.number().optional() }),
-    requireApproval: approvalPolicy == 'always'
-      ? True
-      : approvalPolicy == 'never'
-        ? False
-        # Python equivalent logic
-    # Python equivalent logic
-  })
-# }
+def create_shell_tool(approval_policy: str) -> dict:
+    require_approval = approval_policy in {"always", "dangerous-only"}
+    return {
+        "name": "shell",
+        "description": "Execute a shell command",
+        "require_approval": require_approval,
+    }
 ```
 
 ### Integration
@@ -140,19 +129,12 @@ Or use a function for conditional approval based on the config:
 Add `approvalPolicy` to the config:
 
 ```python
-# Python equivalent logic
-approvalPolicy: 'always' | 'never' | 'dangerous-only'
-
-# Python equivalent logic
-# Python equivalent logic
-
-# Python equivalent logic
-  return [
-    fileReadTool,   // never needs approval
-    fileWriteTool,  // maybe
-    createShellTool(config.approvalPolicy),
-  ]
-# }
+def build_tools(approval_policy: str) -> list[dict]:
+    return [
+        {"name": "file_read", "require_approval": False},
+        {"name": "file_write", "require_approval": approval_policy != "never"},
+        create_shell_tool(approval_policy),
+    ]
 ```
 
 ---
@@ -164,9 +146,13 @@ Emit structured events for tool calls, API requests, and errors. Entry point dec
 ### src/logger.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import logging
+
+def build_logger(name: str = "agent") -> logging.Logger:
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    return logger
 ```
 
 ### Integration
@@ -174,31 +160,16 @@ pass
 In `agent.ts`, emit events in callbacks:
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-  # Python equivalent logic
-
-  # Python equivalent logic
-# ...
-    # Python equivalent logic
-      logger.emit('turn_start', { turn: ctx.numberOfTurns })
-    },
-    # Python equivalent logic
-      logger.emit('turn_end', { turn: ctx.numberOfTurns })
-    },
-  })
-# ...
-# }
+def emit_turn_events(logger, turn: int) -> None:
+    logger.info({"type": "turn_start", "turn": turn})
+    logger.info({"type": "turn_end", "turn": turn})
 ```
 
 In `cli.ts`, attach a handler:
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-logger.on(consoleLogHandler); // or a custom handler
+def console_log_handler(event: dict) -> None:
+    print(f"[{event.get('type', 'event')}] {event.get('message', '')}")
 ```
 
 ---
@@ -212,9 +183,14 @@ Let users type `@filename` to attach file content to their message. Before sendi
 In `cli.ts`, before pushing the user message:
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import re
+from pathlib import Path
+
+def expand_at_references(text: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        path = Path(match.group(1))
+        return path.read_text() if path.exists() else match.group(0)
+    return re.sub(r"@([\w./-]+)", replace, text)
 ```
 
 Optional: add tab completion for `@` using `rl.completer` to fuzzy-match files in the working directory.
@@ -230,9 +206,12 @@ Optional: add tab completion for `@` using `rl.completer` to fuzzy-match files i
 In `cli.ts`, before command dispatch:
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import subprocess
+
+def run_shell_shortcut(raw: str) -> str:
+    command = raw.lstrip("!").strip()
+    result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+    return result.stdout.strip()
 ```
 
 ---
@@ -244,12 +223,13 @@ Replace readline with raw terminal mode to support Shift+Enter for newlines. Ent
 ### src/multi-line-input.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+from pathlib import Path
+
+def src_multi_line_input_example() -> dict:
+    config_path = Path(".agent/config.json")
+    return {"heading": config_path.name, "exists": config_path.exists()}
 ```
 
 ### Integration
 
 Replace the `rl.on('line')` loop with calls to `readMultiLine(prompt)` in a `while` loop.
-

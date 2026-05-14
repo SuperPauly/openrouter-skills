@@ -51,9 +51,11 @@ The `OpenRouter` client class and `client.callModel()` pattern work identically.
 The rest of your code stays the same:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import os
+import requests
+
+OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
+BASE_URL = "https://openrouter.ai/api/v1"
 ```
 
 ---
@@ -70,9 +72,18 @@ pass
 A standalone `callModel` function is also available for advanced use cases where a pre-existing `OpenRouterCore` instance is available:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import requests
+
+def call_model(model: str, messages: list[dict], api_key: str) -> str:
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={"model": model, "messages": messages},
+        timeout=30,
+    )
+    response.raise_for_status()
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
 ```
 
 For most use cases, prefer the `client.callModel()` method shown above.
@@ -118,17 +129,15 @@ For most use cases, prefer the `client.callModel()` method shown above.
 ### Before (using @openrouter/sdk)
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def sdk_style_request(payload: dict) -> dict:
+    return {"sdk_payload": payload, "stream": False}
 ```
 
 ### After (using @openrouter/agent)
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def agent_style_request(messages: list[dict]) -> dict:
+    return {"messages": messages, "tool_choice": "auto"}
 ```
 
 The only changes are the three import lines at the top.
@@ -136,9 +145,12 @@ The only changes are the three import lines at the top.
 ### Python equivalent
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from dataclasses import dataclass
+
+@dataclass
+class AgentConfig:
+    model: str
+    max_steps: int = 8
 ```
 
 ---
@@ -160,9 +172,8 @@ Keep `@openrouter/sdk` installed if you use any of these non-agent features:
 For mixed projects, use `@openrouter/sdk` for these features and `@openrouter/agent` for agent features:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def should_keep_sdk(needs_raw_http: bool, needs_typed_tools: bool) -> bool:
+    return needs_raw_http and not needs_typed_tools
 ```
 
 ---
@@ -176,9 +187,11 @@ These features are only available in `@openrouter/agent`, not in `@openrouter/sd
 Type-safe shared state across all tools in a conversation:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from typing import TypedDict
+
+class SharedContext(TypedDict):
+    user_id: str
+    request_id: str
 ```
 
 ### Tool Context
@@ -186,9 +199,8 @@ pass
 Tools can declare their own typed context and access shared context:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def build_tool_context(user_id: str, cwd: str) -> dict:
+    return {"user_id": user_id, "cwd": cwd}
 ```
 
 ### Tool Approval Flow
@@ -196,17 +208,18 @@ pass
 Require user approval before tool execution:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def tool_approval_flow(tool_name: str) -> str:
+    return "approve" if tool_name in {"shell.exec", "git.push"} else "auto"
 ```
 
 ### Turn Lifecycle Callbacks
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def on_turn_start(turn_id: str) -> None:
+    print(f"turn {turn_id} started")
+
+def on_turn_end(turn_id: str, status: str) -> None:
+    print(f"turn {turn_id} ended: {status}")
 ```
 
 ---

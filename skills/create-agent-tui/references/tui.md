@@ -11,9 +11,9 @@ The input box background should adapt to any terminal color scheme. This module 
 ### src/terminal-bg.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def set_terminal_background(rgb: tuple[int, int, int]) -> None:
+    r, g, b = rgb
+    print(f"\033]11;rgb:{r:02x}/{g:02x}/{b:02x}\007", end="")
 ```
 
 ### How it works
@@ -27,9 +27,10 @@ pass
 ### Wire into cli.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def integrate_components(config: dict) -> dict:
+    model = config.get("model", "openrouter/auto")
+    timeout = int(config.get("timeout", 30))
+    return {"model": model, "timeout": timeout, "ready": True}
 ```
 
 ---

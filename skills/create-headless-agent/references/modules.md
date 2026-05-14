@@ -23,9 +23,8 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 ### src/session.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def session_status(session_id: str, turns: int) -> str:
+    return f"session={session_id} turns={turns}"
 ```
 
 ### Integration
@@ -33,17 +32,15 @@ pass
 In `cli.ts`, wire session persistence around the agent call:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_session_persistence(config: dict) -> dict:
+    return {"session_enabled": config.get("session", True), "storage_dir": ".agent/sessions"}
 ```
 
 For single-shot CLI mode, session persistence is optional. Skip it when the agent runs once and exits, or enable it for audit trails:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_single_shot_mode(config: dict) -> dict:
+    return {"session_enabled": config.get("audit_trail", False), "save_on_exit": True}
 ```
 
 ---
@@ -55,9 +52,9 @@ When conversation history grows too long, summarize older messages to fit within
 ### src/compaction.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def compact_messages(messages: list[str], keep_last: int = 6) -> str:
+    tail = messages[-keep_last:]
+    return "\n".join(f"- {line}" for line in tail)
 ```
 
 ### Integration
@@ -65,9 +62,8 @@ pass
 In `agent.ts`, compact before calling the model:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def attach_compaction_policy(config: dict) -> dict:
+    return {"threshold": int(config.get("threshold", 40)), "keep_recent": int(config.get("keep_recent", 10))}
 ```
 
 ---
@@ -94,9 +90,12 @@ You generally do **not** need to offload `file_read` (it already paginates), `fi
 An inline helper: each tool calls `offloadIfLarge(result, ctx, opts?)` at the end of its `execute`. If the serialized result is under the byte budget, it passes through unchanged; otherwise it gets written to disk and replaced with a preview + pointer. This pattern doesn't require refactoring the existing `tool({...})` exports in `references/tools.md` — the check just lives inside the tool's own `execute` body.
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import json
+import subprocess
+
+def offload_tool_call(command: list[str]) -> dict:
+    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    return {"stdout": result.stdout.strip(), "returncode": result.returncode}
 ```
 
 ### Patch your tools to use it
@@ -104,9 +103,11 @@ pass
 No plain-object refactor needed. Add one line at the return sites of tools whose output can be large. For the `shell` tool defined in `references/tools.md`:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from pathlib import Path
+
+def patch_your_tools_to_example() -> dict:
+    config_path = Path(".agent/config.json")
+    return {"heading": config_path.name, "exists": config_path.exists()}
 ```
 
 Same pattern for `grep`, `web_fetch`, or any custom tool that can return bulk data. `file_read` already paginates, so skip it.
@@ -118,9 +119,12 @@ The companion tool — the model needs a way to retrieve more of the persisted p
 It's exported as a factory so the storage dir can be passed in and wired from the same place that configures `offloadIfLarge`:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from pathlib import Path
+import json
+
+def read_persisted_result(result_id: str) -> dict:
+    path = Path(".agent/tool-results") / f"{result_id}.json"
+    return json.loads(path.read_text())
 ```
 
 ### Wire into src/tools/index.ts
@@ -128,9 +132,12 @@ pass
 Use a single `storageDir` constant so `offloadIfLarge` inside each tool and `createReadPersistedResultTool` in the registry agree on the location:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from pathlib import Path
+
+def register_offload_storage(config: dict) -> Path:
+    storage_dir = Path(config.get("storage_dir", ".agent/tool-results"))
+    storage_dir.mkdir(parents=True, exist_ok=True)
+    return storage_dir
 ```
 
 If you want per-tool offload config (e.g. a larger budget for shell), pass the overrides to `offloadIfLarge` directly inside that tool and make sure its `storageDir` still matches the one passed to `createReadPersistedResultTool`.
@@ -156,9 +163,13 @@ Build the system prompt from a static base plus dynamically loaded context files
 ### src/system-prompt.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def build_system_prompt(project: str, objective: str) -> str:
+    lines = [
+        f"Project: {project}",
+        f"Objective: {objective}",
+        "Be concise and safe.",
+    ]
+    return "\n".join(lines)
 ```
 
 ### Integration
@@ -166,9 +177,8 @@ pass
 In `agent.ts`, use as the `instructions` parameter:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_prompt_sources(config: dict) -> dict:
+    return {"base": config.get("system_prompt", ""), "context_files": ["AGENTS.md", "CLAUDE.md"]}
 ```
 
 ---
@@ -184,17 +194,17 @@ Gate dangerous tools behind programmatic approval. Unlike the TUI version, headl
 Set `requireApproval` on individual tool definitions. It accepts `true`, `false`, or a function that receives the tool arguments and returns a boolean:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def add_require_approval(tool: dict) -> dict:
+    tool["require_approval"] = True
+    return tool
 ```
 
 ### Conditional approval with a predicate
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def needs_approval(tool_name: str, args: dict) -> bool:
+    risky_tools = {"shell.exec", "git.push", "delete.file"}
+    return tool_name in risky_tools or args.get("destructive", False)
 ```
 
 ### Headless approval backend
@@ -202,9 +212,15 @@ pass
 Since there is no terminal prompt, wire approvals to an external system. The `onApproval` callback in your agent runner decides the outcome:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import json
+from pathlib import Path
+
+def queue_approval(tool_call: dict) -> Path:
+    queue_path = Path(".agent/approvals/pending.jsonl")
+    queue_path.parent.mkdir(parents=True, exist_ok=True)
+    with queue_path.open("a") as handle:
+        handle.write(json.dumps(tool_call) + "\n")
+    return queue_path
 ```
 
 ### Integration
@@ -212,9 +228,8 @@ pass
 Add `approvalPolicy` to the config and wire it into the tool builder:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_approval_policy(config: dict) -> dict:
+    return {"approval_policy": config.get("approval_policy", "dangerous-only")}
 ```
 
 ---
@@ -241,33 +256,39 @@ The SDK's [`StateAccessor`](https://openrouter.ai/docs/agent-sdk/call-model/tool
 ### src/state.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from pathlib import Path
+import json
+
+def save_state(run_id: str, state: dict) -> Path:
+    path = Path(".agent/state") / f"{run_id}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state, indent=2))
+    return path
 ```
 
 ### Wire into agent.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def wire_state_accessor(config: dict) -> dict:
+    return {"state_dir": config.get("state_dir", ".agent/state"), "resume": config.get("resume", True)}
 ```
 
 ### Usage: resuming an interrupted run
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import json
+from pathlib import Path
+
+def resume_run(run_id: str) -> dict:
+    path = Path(".agent/state") / f"{run_id}.json"
+    return json.loads(path.read_text())
 ```
 
 ### Usage: approval flow that survives restart
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def restore_pending_approvals(records: list[dict]) -> list[dict]:
+    return [record for record in records if record.get("status") == "pending"]
 ```
 
 ### When to skip this module
@@ -288,9 +309,13 @@ Emit typed JSON events to stderr or a log file for observability. Headless agent
 ### src/logger.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import logging
+
+def build_logger(name: str = "agent") -> logging.Logger:
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    return logger
 ```
 
 ### Integration
@@ -298,17 +323,15 @@ pass
 In `cli.ts`, create a logger and pass it to `runAgent`:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_event_logging(config: dict) -> dict:
+    return {"level": config.get("log_level", "INFO"), "emit_json": config.get("json_logs", True)}
 ```
 
 For file logging (useful in server/queue-worker mode):
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_file_logging(config: dict) -> dict:
+    return {"log_file": config.get("log_file", "agent.log"), "rotate_mb": int(config.get("rotate_mb", 10))}
 ```
 
 ---
@@ -320,9 +343,15 @@ Constrain the agent's final text response to match a JSON schema. Inspired by Co
 ### src/output-schema.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+from dataclasses import dataclass
+
+@dataclass
+class OutputSchema:
+    status: str
+    summary: str
+
+    def as_dict(self) -> dict:
+        return {"status": self.status, "summary": self.summary}
 ```
 
 ### Integration
@@ -330,9 +359,8 @@ pass
 Add a `--output-schema` CLI flag and validate after the agent completes:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_output_validation(config: dict) -> dict:
+    return {"schema_path": config.get("output_schema"), "strict": bool(config.get("strict_schema", True))}
 ```
 
 Example JSON Schema file (`output-schema.json`):
@@ -369,9 +397,12 @@ POST results to an HTTP endpoint when the agent completes. Fire-and-forget with 
 ### src/webhook.ts
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+import requests
+
+def send_webhook(url: str, payload: dict) -> int:
+    response = requests.post(url, json=payload, timeout=10)
+    response.raise_for_status()
+    return response.status_code
 ```
 
 ### Integration
@@ -379,17 +410,15 @@ pass
 In `cli.ts`, call after the agent completes:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_webhook_delivery(config: dict) -> dict:
+    return {"webhook_url": config.get("webhook_url"), "timeout": int(config.get("webhook_timeout", 10))}
 ```
 
 For error cases:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def configure_webhook_retries(config: dict) -> dict:
+    return {"max_retries": int(config.get("webhook_retries", 3)), "backoff_seconds": 2}
 ```
 
 Add webhook config to `agent.config.json`:

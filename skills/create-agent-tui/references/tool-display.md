@@ -33,9 +33,9 @@ TOOL_LABELS = {
 ## src/renderer.ts
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+def format_shell_args(args: dict) -> str:
+    command = args.get("command", "")
+    return command[:60] + ("..." if len(command) > 60 else "")
 ```
 
 ---
@@ -43,14 +43,10 @@ pass
 ## Wire into cli.ts
 
 ```python
-# Python equivalent logic
-
-# Python equivalent logic
-
-# Python equivalent logic
-  # Python equivalent logic
-})
-renderer.endTurn()
+def render_turn(renderer, events: list[dict]) -> None:
+    for event in events:
+        renderer.render_tool_call(event)
+    renderer.end_turn()
 ```
 
 Use `endTurn()` instead of `endStreaming()` — it flushes any pending grouped/minimal state before closing the turn.
@@ -64,14 +60,11 @@ Use `endTurn()` instead of `endStreaming()` — it flushes any pending grouped/m
 Pass `toolColors` to highlight dangerous or special tools (applies to `emoji` and `grouped` styles):
 
 ```python
-# Python equivalent logic
-  display: config.display,
-  toolColors: {
-    shell: '\x1b[31m',      // red — destructive potential
-    file_write: '\x1b[33m', // yellow — modifies files
-    web_search: '\x1b[35m', // magenta — network call
-  },
-})
+TOOL_COLORS = {
+    "shell": "\x1b[31m",
+    "file_write": "\x1b[33m",
+    "web_search": "\x1b[35m",
+}
 ```
 
 ### Custom formatters
@@ -79,9 +72,14 @@ Pass `toolColors` to highlight dangerous or special tools (applies to `emoji` an
 Override how arguments are summarized for any tool:
 
 ```python
-# Python equivalent (simplified)
-# Python equivalent logic
-pass
+import json
+
+def render_tool_event(name: str, args: dict, result: dict) -> str:
+    return (
+        f"tool={name}\n"
+        f"args={json.dumps(args, ensure_ascii=False)}\n"
+        f"result={json.dumps(result, ensure_ascii=False)}"
+    )
 ```
 
 ### Display modes via config

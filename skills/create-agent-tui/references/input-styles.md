@@ -17,9 +17,10 @@ Full-width background-colored input area with top/bottom padding — the same lo
 ### styledReadLine()
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def styled_readline(prompt: str = "agent > ") -> str:
+    green = "\033[32m"
+    reset = "\033[0m"
+    return input(f"{green}{prompt}{reset}")
 ```
 
 ### How it works
@@ -35,9 +36,9 @@ pass
 After `styledReadLine()` resolves, write a bottom BG pad and status line:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def on_submit(raw_text: str) -> dict:
+    text = raw_text.strip()
+    return {"accepted": bool(text), "text": text}
 ```
 
 Scrollback layout: top pad | `› text` | bottom pad | `~/path` status.
@@ -59,9 +60,12 @@ Horizontal `─` lines above and below the input — the same look as Pi's codin
 ### borderedReadLine()
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def bordered_readline(prompt: str = "input") -> str:
+    border = "─" * 24
+    print(f"┌{border}┐")
+    value = input(f"│ {prompt}: ")
+    print(f"└{border}┘")
+    return value
 ```
 
 ### How it works
@@ -77,9 +81,9 @@ pass
 After `borderedReadLine()` resolves, write cwd status line:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def on_submit(raw_text: str) -> dict:
+    text = raw_text.strip()
+    return {"accepted": bool(text), "text": text}
 ```
 
 Scrollback layout: top border | `› text` | `~/path` status (bottom border erased).
@@ -91,9 +95,8 @@ Scrollback layout: top border | `› text` | `~/path` status (bottom border eras
 Standard readline prompt — no raw mode, no escape sequences beyond basic colors.
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def plain_readline(prompt: str = "> ") -> str:
+    return input(prompt).strip()
 ```
 
 No on-submit handling needed — readline handles the display.
@@ -105,9 +108,10 @@ No on-submit handling needed — readline handles the display.
 Use a `getInput()` dispatcher that switches on the configured style:
 
 ```python
-# Python equivalent (simplified)
-# Converted from the previous JavaScript/TypeScript-oriented snippet.
-pass
+def integrate_components(config: dict) -> dict:
+    model = config.get("model", "openrouter/auto")
+    timeout = int(config.get("timeout", 30))
+    return {"model": model, "timeout": timeout, "ready": True}
 ```
 
 Only `block` style calls `detectBg()` at startup. The `bordered` and `plain` styles skip it entirely.
