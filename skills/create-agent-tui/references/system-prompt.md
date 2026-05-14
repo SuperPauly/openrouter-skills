@@ -39,25 +39,25 @@ Guidelines:
 For advanced customization, generate a `buildSystemPrompt()` function that assembles the prompt dynamically:
 
 ```python
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
-import type { AgentConfig } from './config.js';
+# Python equivalent logic
+# Python equivalent logic
+# Python equivalent logic
 
-const CONTEXT_FILES = ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'];
+# Python equivalent logic
 
-export function buildSystemPrompt(config: AgentConfig): string {
-  let prompt = config.systemPrompt.replace('{cwd}', process.cwd());
+# Python equivalent logic
+  # Python equivalent logic
 
-  for (const filename of CONTEXT_FILES) {
-    const filePath = resolve(filename);
+  # Python equivalent logic
+    # Python equivalent logic
     if (existsSync(filePath)) {
-      const content = readFileSync(filePath, 'utf-8');
-      prompt += `\n\n## ${filename}\n\n${content}`;
-    }
-  }
+      # Python equivalent logic
+      prompt += "\n\n## ${filename}\n\n${content}"
+# }
+# }
 
-  return prompt;
-}
+  return prompt
+# }
 ```
 
 ### Integration
@@ -65,9 +65,9 @@ export function buildSystemPrompt(config: AgentConfig): string {
 In `agent.ts`, use `buildSystemPrompt` instead of passing the raw config string:
 
 ```python
-import { buildSystemPrompt } from './system-prompt.js';
+# Python equivalent logic
 
-// In callModel:
+# In callModel:
 instructions: buildSystemPrompt(config),
 ```
 

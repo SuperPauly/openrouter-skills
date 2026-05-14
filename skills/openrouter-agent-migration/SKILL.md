@@ -51,14 +51,14 @@ The `OpenRouter` client class and `client.callModel()` pattern work identically.
 The rest of your code stays the same:
 
 ```python
-const client = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
+# Python equivalent logic
 
-const result = client.callModel({
+# Python equivalent logic
   model: 'openai/gpt-5-nano',
   input: 'Hello!',
-});
+})
 
-const text = await result.getText();
+# Python equivalent logic
 ```
 
 ---
@@ -75,10 +75,11 @@ const text = await result.getText();
 A standalone `callModel` function is also available for advanced use cases where a pre-existing `OpenRouterCore` instance is available:
 
 ```python
-import { callModel } from '@openrouter/agent/call-model';
+# Python equivalent logic
 
-// Requires an OpenRouterCore instance (from @openrouter/sdk/core)
-const result = callModel(coreInstance, { model: 'openai/gpt-5-nano', input: 'Hello' });
+# Requires an OpenRouterCore instance (from @openrouter/sdk/core)
+# Python equivalent logic
+pass
 ```
 
 For most use cases, prefer the `client.callModel()` method shown above.
@@ -124,79 +125,79 @@ For most use cases, prefer the `client.callModel()` method shown above.
 ### Before (using @openrouter/sdk)
 
 ```python
-import OpenRouter, { tool, stepCountIs, hasToolCall } from '@openrouter/sdk';
-import { z } from 'zod';
+# Python equivalent logic
+# Python equivalent logic
 
-const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+# Python equivalent logic
+  # Python equivalent logic
+})
 
-const searchTool = tool({
+# Python equivalent logic
   name: 'web_search',
   description: 'Search the web',
   inputSchema: z.object({ query: z.string() }),
   outputSchema: z.object({ results: z.array(z.string()) }),
-  execute: async ({ query }) => {
-    return { results: ['Result 1', 'Result 2'] };
+  # Python equivalent logic
+    return { results: ['Result 1', 'Result 2'] }
   },
-});
+})
 
-const finishTool = tool({
+# Python equivalent logic
   name: 'finish',
   description: 'Complete the task',
   inputSchema: z.object({ answer: z.string() }),
-  execute: async ({ answer }) => ({ answer }),
-});
+  # Python equivalent logic
+})
 
-const result = client.callModel({
+# Python equivalent logic
   model: 'openai/gpt-5-nano',
   instructions: 'You are a research assistant.',
   input: 'What are the latest AI developments?',
   tools: [searchTool, finishTool],
   stopWhen: [stepCountIs(10), hasToolCall('finish')],
-});
+})
 
-const text = await result.getText();
+# Python equivalent logic
 ```
 
 ### After (using @openrouter/agent)
 
 ```python
-import { OpenRouter } from '@openrouter/agent';
-import { tool } from '@openrouter/agent/tool';
-import { stepCountIs, hasToolCall } from '@openrouter/agent/stop-conditions';
-import { z } from 'zod';
+# Python equivalent logic
+# Python equivalent logic
+# Python equivalent logic
+# Python equivalent logic
 
-const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+# Python equivalent logic
+  # Python equivalent logic
+})
 
-const searchTool = tool({
+# Python equivalent logic
   name: 'web_search',
   description: 'Search the web',
   inputSchema: z.object({ query: z.string() }),
   outputSchema: z.object({ results: z.array(z.string()) }),
-  execute: async ({ query }) => {
-    return { results: ['Result 1', 'Result 2'] };
+  # Python equivalent logic
+    return { results: ['Result 1', 'Result 2'] }
   },
-});
+})
 
-const finishTool = tool({
+# Python equivalent logic
   name: 'finish',
   description: 'Complete the task',
   inputSchema: z.object({ answer: z.string() }),
-  execute: async ({ answer }) => ({ answer }),
-});
+  # Python equivalent logic
+})
 
-const result = client.callModel({
+# Python equivalent logic
   model: 'openai/gpt-5-nano',
   instructions: 'You are a research assistant.',
   input: 'What are the latest AI developments?',
   tools: [searchTool, finishTool],
   stopWhen: [stepCountIs(10), hasToolCall('finish')],
-});
+})
 
-const text = await result.getText();
+# Python equivalent logic
 ```
 
 The only changes are the three import lines at the top.
@@ -204,60 +205,9 @@ The only changes are the three import lines at the top.
 ### Python equivalent
 
 ```python
-# Python equivalent using requests
-import requests
-import json
-import os
-
-BASE_URL = "https://openrouter.ai/api/v1"
-HEADERS = {"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}", "Content-Type": "application/json"}
-
-def execute_tool(name: str, args: dict) -> dict:
-    if name == "web_search":
-        return {"results": ["Result 1", "Result 2"]}
-    if name == "finish":
-        return args
-    return {}
-
-input_items = [{"role": "user", "content": "What are the latest AI developments?"}]
-previous_id = None
-accumulated_text = ""
-
-for _ in range(10):
-    payload = {
-        "model": "openai/gpt-5-nano",
-        "instructions": "You are a research assistant.",
-        "input": input_items,
-        "tools": [
-            {"type": "function", "name": "web_search", "description": "Search the web",
-             "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
-            {"type": "function", "name": "finish", "description": "Complete the task",
-             "parameters": {"type": "object", "properties": {"answer": {"type": "string"}}, "required": ["answer"]}},
-        ],
-    }
-    if previous_id:
-        payload["previous_response_id"] = previous_id
-    resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json=payload)
-    resp.raise_for_status()
-    data = resp.json()
-    previous_id = data["id"]
-    tool_calls = []
-    for item in data.get("output", []):
-        if item.get("type") == "message":
-            for part in item.get("content", []):
-                if part.get("type") == "output_text":
-                    accumulated_text += part["text"]
-        elif item.get("type") == "function_call":
-            tool_calls.append(item)
-    if not tool_calls or any(tc["name"] == "finish" for tc in tool_calls):
-        break
-    input_items = []
-    for tc in tool_calls:
-        args = json.loads(tc["arguments"])
-        result = execute_tool(tc["name"], args)
-        input_items.append({"type": "function_call_output", "call_id": tc["call_id"], "output": json.dumps(result)})
-
-print(accumulated_text)
+# Python equivalent (simplified)
+# Python equivalent logic
+pass
 ```
 
 ---
@@ -279,24 +229,24 @@ Keep `@openrouter/sdk` installed if you use any of these non-agent features:
 For mixed projects, use `@openrouter/sdk` for these features and `@openrouter/agent` for agent features:
 
 ```python
-import OpenRouter from '@openrouter/sdk';               // SDK client for models, credits, etc.
-import { OpenRouter as Agent } from '@openrouter/agent'; // Agent client for callModel
-import { tool } from '@openrouter/agent/tool';
-import { stepCountIs } from '@openrouter/agent/stop-conditions';
+# Python equivalent logic
+# Python equivalent logic
+# Python equivalent logic
+# Python equivalent logic
 
-// Use SDK client for non-agent features
-const sdkClient = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
-const models = await sdkClient.models.list();
-const credits = await sdkClient.credits.getCredits();
+# Use SDK client for non-agent features
+# Python equivalent logic
+# Python equivalent logic
+# Python equivalent logic
 
-// Use Agent client for callModel
-const agent = new Agent({ apiKey: process.env.OPENROUTER_API_KEY });
-const result = agent.callModel({
+# Use Agent client for callModel
+# Python equivalent logic
+# Python equivalent logic
   model: 'openai/gpt-5-nano',
   input: 'Hello!',
   tools: [myTool],
   stopWhen: stepCountIs(5),
-});
+})
 ```
 
 ---
@@ -310,12 +260,12 @@ These features are only available in `@openrouter/agent`, not in `@openrouter/sd
 Type-safe shared state across all tools in a conversation:
 
 ```python
-import { OpenRouter } from '@openrouter/agent';
-import { z } from 'zod';
+# Python equivalent logic
+# Python equivalent logic
 
-const client = new OpenRouter({ apiKey: '...' });
+# Python equivalent logic
 
-const result = client.callModel({
+# Python equivalent logic
   model: 'openai/gpt-5-nano',
   input: 'Process this data',
   sharedContextSchema: z.object({
@@ -326,7 +276,7 @@ const result = client.callModel({
     shared: { userId: '123', sessionData: {} },
   },
   tools: [myTool],
-});
+})
 ```
 
 ### Tool Context
@@ -334,22 +284,22 @@ const result = client.callModel({
 Tools can declare their own typed context and access shared context:
 
 ```python
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+# Python equivalent logic
+# Python equivalent logic
 
-const myTool = tool({
+# Python equivalent logic
   name: 'my_tool',
   description: 'A tool with context',
   inputSchema: z.object({ query: z.string() }),
   contextSchema: z.object({ apiKey: z.string() }),
-  execute: async (params, context) => {
-    // context.local — this tool's own context
-    // context.shared — shared context across all tools
-    // context.setContext({ ... }) — update this tool's context
-    // context.setSharedContext({ ... }) — update shared context
-    return { result: 'done' };
+  # Python equivalent logic
+# context.local — this tool's own context
+# context.shared — shared context across all tools
+# context.setContext({ ... }) — update this tool's context
+# context.setSharedContext({ ... }) — update shared context
+    return { result: 'done' }
   },
-});
+})
 ```
 
 ### Tool Approval Flow
@@ -357,29 +307,29 @@ const myTool = tool({
 Require user approval before tool execution:
 
 ```python
-const dangerousTool = tool({
+# Python equivalent logic
   name: 'delete_file',
   description: 'Delete a file',
   inputSchema: z.object({ path: z.string() }),
-  requireApproval: true, // or a function: (toolCall, context) => boolean
-  execute: async ({ path }) => { /* ... */ },
-});
+  # Python equivalent logic
+  # Python equivalent logic
+})
 ```
 
 ### Turn Lifecycle Callbacks
 
 ```python
-const result = client.callModel({
+# Python equivalent logic
   model: 'openai/gpt-5-nano',
   input: 'Complex task',
   tools: [myTool],
-  onTurnStart: async (context) => {
-    console.log(`Starting turn ${context.numberOfTurns}`);
+  # Python equivalent logic
+    # console.log("Starting turn ${context.numberOfTurns}")
   },
-  onTurnEnd: async (context, response) => {
-    console.log(`Turn ${context.numberOfTurns} complete`);
+  # Python equivalent logic
+    # console.log("Turn ${context.numberOfTurns} complete")
   },
-});
+})
 ```
 
 ---

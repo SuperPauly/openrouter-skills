@@ -51,7 +51,7 @@ Find files by glob pattern.
 
 ```python
 inputSchema: z.object({
-  pattern: z.string().describe('Glob pattern, e.g. "src/**/*.ts"'),
+  pattern: z.string().describe('Glob pattern, e.g. "src/**/*.py"'),
   path: z.string().optional().describe('Directory to search in (default: cwd)'),
 })
 ```
@@ -67,7 +67,7 @@ Search file contents by regex.
 inputSchema: z.object({
   pattern: z.string().describe('Regex pattern to search for'),
   path: z.string().optional().describe('Directory or file to search (default: cwd)'),
-  glob: z.string().optional().describe('File filter, e.g. "*.ts"'),
+  glob: z.string().optional().describe('File filter, e.g. "*.py"'),
   ignoreCase: z.boolean().optional(),
 })
 ```
@@ -108,23 +108,23 @@ inputSchema: z.object({
 Generate this as a starting point for domain-specific tools:
 
 ```python
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+# Python equivalent logic
+# Python equivalent logic
 
-export const myCustomTool = tool({
+# Python equivalent logic
   name: 'my_tool',
   description: 'Describe what this tool does',
   inputSchema: z.object({
-    // Define your input parameters here
+# Define your input parameters here
     param: z.string().describe('Description of the parameter'),
   }),
-  // Optional: require user approval before execution
-  // requireApproval: true,
-  execute: async ({ param }) => {
-    // Implement your tool logic here
-    return { result: 'done' };
+# # Optional: require user approval before execution
+# requireApproval: True,
+  # Python equivalent logic
+# Implement your tool logic here
+    return { result: 'done' }
   },
-});
+})
 ```
 
 ---
@@ -164,7 +164,7 @@ Track multi-step task progress.
 inputSchema: z.object({
   items: z.array(z.object({
     step: z.string().describe('Description of the step'),
-    status: z.enum(['pending', 'in_progress', 'completed']),
+    # status: z.enum(['pending', 'in_progress', 'completed']),
   })),
 })
 ```

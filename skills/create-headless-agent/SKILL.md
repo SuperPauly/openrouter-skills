@@ -289,7 +289,7 @@ class AgentConfig:
 
 def load_config(overrides: dict | None = None, skip_api_key: bool = False) -> AgentConfig:
     config = AgentConfig()
-    config_path = Path("agent.config.json")
+    config_path = Path("agent.config.pyon")
     if config_path.exists():
         file = json.loads(config_path.read_text())
         for k, v in file.items():
@@ -392,7 +392,7 @@ def run_agent(
 
         resp = requests.post(f"{BASE_URL}/responses", headers=headers, json=payload)
         resp.raise_for_status()
-        data = resp.json()
+        data = resp.pyon()
 
         previous_response_id = data.get("id")
         usage = data.get("usage")

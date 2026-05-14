@@ -73,7 +73,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "Hello!",
 })
 resp.raise_for_status()
-print(resp.json()["output"][0]["content"][0]["text"])
+print(resp.pyon()["output"][0]["content"][0]["text"])
 ```
 
 #### Get Current Key Metadata
@@ -81,7 +81,7 @@ print(resp.json()["output"][0]["content"][0]["text"])
 ```python
 resp = requests.get(f"{BASE_URL}/auth/key", headers=HEADERS)
 resp.raise_for_status()
-key_info = resp.json()
+key_info = resp.pyon()
 print("Label:", key_info.get("data", {}).get("label"))
 print("Usage:", key_info.get("data", {}).get("usage"))
 ```
@@ -91,13 +91,13 @@ print("Usage:", key_info.get("data", {}).get("usage"))
 ```python
 # List all keys
 resp = requests.get(f"{BASE_URL}/auth/keys", headers=HEADERS)
-keys = resp.json()
+keys = resp.pyon()
 
-# Create a new key
+# # Create a new key
 resp = requests.post(f"{BASE_URL}/auth/keys", headers=HEADERS, json={
     "name": "Production API Key"
 })
-new_key = resp.json()
+new_key = resp.pyon()
 
 # Delete a key
 resp = requests.delete(f"{BASE_URL}/auth/keys/{{hash}}", headers=HEADERS)
@@ -121,7 +121,7 @@ def auth_start():
     resp = requests.post(f"{BASE_URL}/auth/keys", headers=HEADERS, json={
         "callback_url": "https://myapp.com/auth/callback"
     })
-    auth_response = resp.json()
+    auth_response = resp.pyon()
     return redirect(auth_response["authorization_url"])
 
 @app.get("/auth/callback")
@@ -131,7 +131,7 @@ def auth_callback():
         return "Authorization code missing", 400
     try:
         resp = requests.post(f"{BASE_URL}/auth/keys/exchange", headers=HEADERS, json={"code": code})
-        api_key_response = resp.json()
+        api_key_response = resp.pyon()
         return redirect("/dashboard?auth=success")
     except Exception:
         return redirect("/auth/error")
@@ -142,9 +142,9 @@ def chat():
     user_headers = {"Authorization": f"Bearer {user_api_key}", "Content-Type": "application/json"}
     resp = requests.post(f"{BASE_URL}/responses", headers=user_headers, json={
         "model": "openai/gpt-5-nano",
-        "input": request.json["message"],
+        "input": request.pyon["message"],
     })
-    return jsonify({"response": resp.json()["output"][0]["content"][0]["text"]})
+    return jsonify({"response": resp.pyon()["output"][0]["content"][0]["text"]})
 ```
 
 ---
@@ -159,7 +159,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "Explain quantum computing in one sentence.",
 })
 resp.raise_for_status()
-data = resp.json()
+data = resp.pyon()
 print(data["output"][0]["content"][0]["text"])
 ```
 
@@ -219,7 +219,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
 ### Extract Text
 
 ```python
-data = resp.json()
+data = resp.pyon()
 text = data["output"][0]["content"][0]["text"]
 ```
 
@@ -263,19 +263,9 @@ print()
 ### Defining Tools
 
 ```python
-weather_tool = {
-    "type": "function",
-    "name": "get_weather",
-    "description": "Get current weather for a location",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "location": {"type": "string", "description": "City name"},
-            "units": {"type": "string", "enum": ["celsius", "fahrenheit"], "default": "celsius"},
-        },
-        "required": ["location"],
-    },
-}
+# Python equivalent (simplified)
+# Python equivalent logic
+pass
 ```
 
 ### Using Tools with the Responses API
@@ -292,7 +282,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "tools": [weather_tool],
 })
 resp.raise_for_status()
-data = resp.json()
+data = resp.pyon()
 response_id = data["id"]
 
 tool_outputs = []
@@ -313,7 +303,7 @@ if tool_outputs:
         "input": tool_outputs,
     })
     resp2.raise_for_status()
-    final = resp2.json()
+    final = resp2.pyon()
     print(final["output"][0]["content"][0]["text"])
 ```
 
@@ -345,7 +335,7 @@ def run_agent(model: str, prompt: str, tools: list, max_steps: int = 10) -> str:
 
         resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json=payload)
         resp.raise_for_status()
-        data = resp.json()
+        data = resp.pyon()
         previous_id = data["id"]
 
         tool_calls = []
@@ -454,7 +444,7 @@ def stream_response(model: str, prompt: str) -> str:
 ```python
 resp = requests.get(f"{BASE_URL}/models", headers=HEADERS)
 resp.raise_for_status()
-models = resp.json()["data"]
+models = resp.pyon()["data"]
 for m in models[:5]:
     print(m["id"], "-", m.get("name"))
 ```
@@ -466,7 +456,7 @@ for m in models[:5]:
 ```python
 resp = requests.get(f"{BASE_URL}/credits", headers=HEADERS)
 resp.raise_for_status()
-credits = resp.json()
+credits = resp.pyon()
 print("Total credits:", credits.get("data", {}).get("total_credits"))
 ```
 
@@ -483,7 +473,7 @@ try:
         "input": "Hello!",
     })
     resp.raise_for_status()
-    data = resp.json()
+    data = resp.pyon()
 except requests.HTTPError as e:
     if e.response is not None:
         status = e.response.status_code
@@ -511,7 +501,7 @@ def post_with_retry(url: str, payload: dict, max_retries: int = 3) -> dict:
         try:
             resp = requests.post(url, headers=HEADERS, json=payload)
             resp.raise_for_status()
-            return resp.json()
+            return resp.pyon()
         except requests.HTTPError as e:
             status = e.response.status_code if e.response is not None else 0
             retryable = status == 429 or (500 <= status < 600)
@@ -555,7 +545,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     },
 })
 import json
-result = json.loads(resp.json()["output"][0]["content"][0]["text"])
+result = json.loads(resp.pyon()["output"][0]["content"][0]["text"])
 print(result["languages"])
 ```
 
@@ -571,7 +561,7 @@ resp1 = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "What is the capital of France?",
 })
 resp1.raise_for_status()
-data1 = resp1.json()
+data1 = resp1.pyon()
 
 resp2 = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "model": "openai/gpt-5-nano",
@@ -579,7 +569,7 @@ resp2 = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
     "input": "What is its population?",
 })
 resp2.raise_for_status()
-data2 = resp2.json()
+data2 = resp2.pyon()
 print(data2["output"][0]["content"][0]["text"])
 ```
 
@@ -604,82 +594,7 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
 ## Complete Working Example
 
 ```python
-import requests
-import json
-import os
-
-BASE_URL = "https://openrouter.ai/api/v1"
-HEADERS = {
-    "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
-    "Content-Type": "application/json",
-}
-
-calculator_tool = {
-    "type": "function",
-    "name": "calculate",
-    "description": "Evaluate a mathematical expression",
-    "parameters": {
-        "type": "object",
-        "properties": {"expression": {"type": "string"}},
-        "required": ["expression"],
-    },
-}
-
-
-def execute_tool(name: str, args: dict) -> str:
-    if name == "calculate":
-        try:
-            return str(eval(args["expression"]))
-        except Exception as e:
-            return f"Error: {e}"
-    return f"Unknown tool: {name}"
-
-
-def run_agent(prompt: str, max_steps: int = 5) -> str:
-    input_items = [{"role": "user", "content": prompt}]
-    previous_id = None
-    accumulated_text = ""
-
-    for _ in range(max_steps):
-        payload = {
-            "model": "openai/gpt-5-nano",
-            "tools": [calculator_tool],
-            "input": input_items,
-        }
-        if previous_id:
-            payload["previous_response_id"] = previous_id
-
-        resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json=payload)
-        resp.raise_for_status()
-        data = resp.json()
-        previous_id = data["id"]
-
-        tool_calls = []
-        for item in data.get("output", []):
-            if item.get("type") == "message":
-                for part in item.get("content", []):
-                    if part.get("type") == "output_text":
-                        accumulated_text += part["text"]
-            elif item.get("type") == "function_call":
-                tool_calls.append(item)
-
-        if not tool_calls:
-            break
-
-        input_items = []
-        for tc in tool_calls:
-            args = json.loads(tc["arguments"])
-            result = execute_tool(tc["name"], args)
-            input_items.append({
-                "type": "function_call_output",
-                "call_id": tc["call_id"],
-                "output": result,
-            })
-
-    return accumulated_text
-
-
-if __name__ == "__main__":
-    answer = run_agent("What is 15 * 7 + 42?")
-    print(answer)
+# Python equivalent (simplified)
+# Python equivalent logic
+pass
 ```
