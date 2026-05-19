@@ -1,140 +1,56 @@
-# Loader Styles
+# Python Loader Animations
 
-Three loader animations are available, configured via `config.display.loader`. The default is `gradient` with text `"Working"`.
+The loader runs while waiting for a model response. Keep it isolated so the agent loop can start and stop it around network calls.
 
-```python
-export interface LoaderConfig {
-  text: string;
-  style: 'gradient' | 'spinner' | 'minimal';
-}
-```
-
-| Style | Look | Description |
-|-------|------|-------------|
-| `gradient` | Scrolling color wave over the text | Each letter cycles through gray-to-white ANSI 256 colors, creating a shimmer effect. 150ms per frame. |
-| `spinner` | `⠋ Working` / `⠙ Working` / ... | Braille dot spinner (10-frame cycle) to the left of the text. 80ms per frame. Same style as Pi and Codex. |
-| `minimal` | `Working·` / `Working··` / `Working···` | Dot trail to the right of the text. 300ms per frame. Lowest visual noise. |
-
----
-
-## src/loader.ts
+## Loader Class
 
 ```python
-import type { LoaderConfig } from './config.js';
+from __future__ import annotations
 
-const DIM = '\x1b[2m';
-const RESET = '\x1b[0m';
+import itertools
+import sys
+import threading
+import time
 
-const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+class Loader:
+    def __init__(self, text: str = "thinking", style: str = "spinner") -> None:
+        self.text = text
+        self.style = style
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
 
-const GRADIENT_COLORS = [
-  '\x1b[38;5;240m',
-  '\x1b[38;5;245m',
-  '\x1b[38;5;250m',
-  '\x1b[38;5;255m',
-  '\x1b[38;5;250m',
-  '\x1b[38;5;245m',
-];
+    def start(self) -> None:
+        self._stop.clear()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
 
-export class Loader {
-  private config: LoaderConfig;
-  private frame = 0;
-  private interval: ReturnType<typeof setInterval> | null = null;
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread:
+            self._thread.join(timeout=1)
+        sys.stderr.write("\r" + " " * 80 + "\r")
+        sys.stderr.flush()
 
-  constructor(config: LoaderConfig) {
-    this.config = config;
-  }
-
-  start(): void {
-    this.frame = 0;
-    const ms = this.config.style === 'gradient' ? 150 : this.config.style === 'spinner' ? 80 : 300;
-    this.interval = setInterval(() => this.draw(), ms);
-  }
-
-  stop(): void {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-      process.stdout.write('\r\x1b[K');
-    }
-  }
-
-  private draw(): void {
-    const { text, style } = this.config;
-    this.frame++;
-
-    switch (style) {
-      case 'minimal': {
-        const dots = ['·', '··', '···'];
-        process.stdout.write(`\r${DIM}${text}${dots[this.frame % 3]}${RESET}`);
-        break;
-      }
-      case 'spinner': {
-        const char = SPINNER_FRAMES[this.frame % SPINNER_FRAMES.length];
-        process.stdout.write(`\r${DIM}${char} ${text}${RESET}`);
-        break;
-      }
-      case 'gradient': {
-        const len = GRADIENT_COLORS.length;
-        let out = '\r';
-        for (let i = 0; i < text.length; i++) {
-          const ci = (this.frame + i) % len;
-          out += GRADIENT_COLORS[ci] + text[i];
-        }
-        out += RESET;
-        process.stdout.write(out);
-        break;
-      }
-    }
-  }
-}
+    def _run(self) -> None:
+        frames = itertools.cycle(["|", "/", "-", "\\"])
+        dots = itertools.cycle(["", ".", "..", "..."])
+        while not self._stop.is_set():
+            if self.style == "minimal":
+                frame = next(dots)
+                sys.stderr.write(f"\r{self.text}{frame}")
+            else:
+                sys.stderr.write(f"\r{next(frames)} {self.text}")
+            sys.stderr.flush()
+            time.sleep(0.12)
 ```
 
----
-
-## Wire into cli.ts
+## Wiring
 
 ```python
-import { Loader } from './loader.js';
-
-// Before the agent call — show loader + a preview input box below it:
-const loader = new Loader(config.display.loader);
-loader.start();
-showPreviewInput(); // draw a non-interactive input box below the loader
-
-// On first event (text or tool_call) — clear preview, stop loader:
-clearPreviewInput();
-loader.stop();
-
-// After tool_result (agent pauses between turns) — restart loader + preview:
-loader.start();
-showPreviewInput();
-
-// After response or on error:
-clearPreviewInput();
-loader.stop();
+loader = Loader(config.display.loader_text, config.display.loader_style)
+loader.start()
+try:
+    result = run_agent_with_retry(config, user_input)
+finally:
+    loader.stop()
 ```
-
-The preview input box is a visual-only rendering of the input prompt below the loader line. It shows the user where their next prompt will go. When agent events arrive, the preview is erased and replaced with actual output. After the agent finishes, the real interactive input box appears.
-
----
-
-## Config
-
-Set in `agent.config.json`:
-
-```json
-{
-  "display": {
-    "loader": {
-      "text": "Thinking",
-      "style": "spinner"
-    }
-  }
-}
-```
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `text` | string | `"Working"` | The word displayed during loading |
-| `style` | `'gradient'` \| `'spinner'` \| `'minimal'` | `'gradient'` | Animation style |

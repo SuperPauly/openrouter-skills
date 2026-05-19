@@ -6,6 +6,16 @@
     "name": "OpenRouter",
     "url": "https://openrouter.ai"
   },
-  "keywords": ["openrouter", "ai", "llm", "models", "python", "sdk", "image-generation", "model-routing", "ai-gateway"],
+  "keywords": [
+    "openrouter",
+    "ai",
+    "llm",
+    "models",
+    "python",
+    "sdk",
+    "image-generation",
+    "model-routing",
+    "ai-gateway"
+  ],
   "logo": "logo.svg"
 }

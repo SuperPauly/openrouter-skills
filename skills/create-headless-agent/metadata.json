@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "organization": "OpenRouter Inc",
   "date": "April 2026",
-  "abstract": "Scaffolds a headless agent in Python using @openrouter/agent and Bun — for CLI tools, API servers, queue workers, and pipelines. No terminal UI.",
+  "abstract": "Scaffolds a headless agent in Python using the OpenRouter Responses API \u2014 for CLI tools, API servers, queue workers, and pipelines. No terminal UI.",
   "references": [
     "https://openrouter.ai/docs/guides/features/server-tools/overview",
     "https://openrouter.ai/docs/guides/features/tool-calling",

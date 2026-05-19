@@ -1,104 +1,39 @@
-# System Prompt
+# Python System Prompt Module
 
-The default system prompt turns a generic chat model into a coding agent that proactively uses tools. Without it, models tend to ask clarifying questions instead of exploring the codebase.
-
----
-
-## Default Prompt
-
-The harness ships with this default prompt. It uses `{cwd}` as a placeholder — replaced at runtime with `process.cwd()`.
-
-```
-You are a coding assistant with access to tools for reading files, writing files, editing code, searching code, and running shell commands.
-
-Current working directory: {cwd}
-
-Guidelines:
-- Use your tools proactively. Explore the codebase to find answers instead of asking the user.
-- Keep working until the task is fully resolved before responding.
-- Do not guess or make up information — use your tools to verify.
-- Be concise and direct.
-- Show file paths clearly when working with files.
-- Prefer grep and glob tools over shell commands for file search.
-- When editing code, make minimal targeted changes consistent with the existing style.
-```
-
-### Why these guidelines matter
-
-| Guideline | Without it |
-|-----------|-----------|
-| "Use tools proactively" | Model asks "which file?" instead of using `list_dir` |
-| "Keep working until resolved" | Model stops after one tool call, asks if it should continue |
-| "Do not guess" | Model hallucinates file paths or function names |
-| "Prefer grep/glob over shell" | Model runs `find . -name ...` (slow, ignores .gitignore) instead of `glob` |
-
----
-
-## src/system-prompt.ts (optional module)
-
-For advanced customization, generate a `buildSystemPrompt()` function that assembles the prompt dynamically:
+Use a dedicated module when the system prompt is assembled from project files, generated context, or user-selected instructions.
 
 ```python
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
-import type { AgentConfig } from './config.js';
+from pathlib import Path
 
-const CONTEXT_FILES = ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'];
+DEFAULT_CONTEXT_FILES = ["AGENTS.md", "README.md", ".agent-context.md"]
 
-export function buildSystemPrompt(config: AgentConfig): string {
-  let prompt = config.systemPrompt.replace('{cwd}', process.cwd());
 
-  for (const filename of CONTEXT_FILES) {
-    const filePath = resolve(filename);
-    if (existsSync(filePath)) {
-      const content = readFileSync(filePath, 'utf-8');
-      prompt += `\n\n## ${filename}\n\n${content}`;
-    }
-  }
-
-  return prompt;
-}
+def build_system_prompt(base: str, project_dir: str = ".", context_files: list[str] | None = None) -> str:
+    files = context_files or DEFAULT_CONTEXT_FILES
+    root = Path(project_dir)
+    parts = [base]
+    for name in files:
+        file_path = root / name
+        if file_path.exists() and file_path.is_file():
+            content = file_path.read_text(encoding="utf-8", errors="replace")
+            parts.append(f"\n# {name}\n{content}")
+    return "\n".join(parts)
 ```
 
-### Integration
-
-In `agent.ts`, use `buildSystemPrompt` instead of passing the raw config string:
+Use it in `agent.py`:
 
 ```python
-import { buildSystemPrompt } from './system-prompt.js';
+from .system_prompt import build_system_prompt
 
-// In callModel:
-instructions: buildSystemPrompt(config),
+instructions = build_system_prompt(config.instructions, config.project_dir, config.context_files)
 ```
 
-This is the same pattern as the System Prompt Composition module in [modules.md](modules.md), but simplified for the common case. If the user selected the full System Prompt Composition module, use that instead.
-
----
-
-## Customization
-
-### Override the entire prompt
-
-Set `systemPrompt` in `agent.config.json`:
+Recommended config:
 
 ```json
 {
-  "systemPrompt": "You are a Python expert. Always use type hints. {cwd}"
-}
-```
-
-The `{cwd}` placeholder is still replaced at runtime.
-
-### Append project context
-
-Use AGENTS.md / CLAUDE.md files in the project root. The `buildSystemPrompt()` function (or the System Prompt Composition module) will find and append them automatically.
-
-### Disable tool-use instructions
-
-For non-coding use cases where proactive tool use isn't desired:
-
-```json
-{
-  "systemPrompt": "You are a helpful assistant. Answer questions conversationally."
+  "instructions": "You are a focused coding assistant.",
+  "project_dir": ".",
+  "context_files": ["AGENTS.md", "README.md"]
 }
 ```

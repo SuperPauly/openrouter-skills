@@ -1,31 +1,31 @@
-# openrouter-tts
+# OpenRouter Text To Speech
 
-Synthesize speech from text via OpenRouter's synchronous `POST /api/v1/audio/speech`. Covers basic usage with `curl`, model/voice discovery, format selection (mp3 vs pcm), provider-specific options (e.g. OpenAI `instructions`), and OpenAI-SDK compatibility.
+Generate speech audio through OpenRouter-compatible speech endpoints from Python.
 
-## Install
-
-With the [GitHub CLI](https://cli.github.com/) (v2.90.0+):
+## Setup
 
 ```bash
-gh skill install OpenRouterTeam/skills openrouter-tts
+pip install requests
+OPENROUTER_API_KEY=your-key python3 scripts/example.py
 ```
 
-Works with Claude Code, Cursor, Codex, OpenCode, Gemini CLI, Windsurf, and [many more agents](https://cli.github.com/manual/gh_skill_install). Add `--scope user` to install across every project for your current agent, or `--agent claude-code` to target a specific agent.
+## Files
 
-For other install methods (Claude Code plugin marketplace, Cursor Rules, etc.) see the [root README](../../README.md#installing).
+- `scripts/lib.py`: shared Python request helpers.
+- `scripts/example.py`: minimal runnable example for this skill.
 
-## Prerequisites
+## Pattern
 
-- `OPENROUTER_API_KEY` environment variable. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
-- `curl` and `jq` (for the bash workflow), or the OpenAI Python SDK.
+```python
+import os
+import requests
 
-## What it covers
-
-See [SKILL.md](SKILL.md) for the full reference, including:
-
-- A drop-in bash script that handles headers, error bodies, and generation ID capture
-- Discovering TTS models via `/api/v1/models?output_modalities=speech`
-- Picking between `mp3` and `pcm`, and avoiding the format/extension mismatch that accounts for most "empty audio" reports
-- Provider passthrough (`provider.options.<slug>`) including OpenAI's `instructions` for tone/pacing
-- OpenAI SDK compatibility — swap the base URL and the existing client code works
-- Splitting and concatenating long inputs
+response = requests.post(
+    "https://openrouter.ai/api/v1/responses",
+    headers={"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}", "Content-Type": "application/json"},
+    json={"model": "openai/gpt-4o", "input": "Hello"},
+    timeout=60,
+)
+response.raise_for_status()
+print(response.json())
+```

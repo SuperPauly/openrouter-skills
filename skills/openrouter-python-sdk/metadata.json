@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "organization": "OpenRouter Inc",
+  "date": "March 2026",
+  "abstract": "Complete Python reference for OpenRouter chat, Responses API calls, streaming, tool definitions, model metadata, authentication, and low-level requests examples.",
+  "references": [
+    "https://openrouter.ai/docs/client-sdks/python/overview",
+    "https://openrouter.ai/docs/sdks/python/api-reference/responses",
+    "https://openrouter.ai/docs/api/reference/overview",
+    "https://openrouter.ai/docs/api/reference/responses/tool-calling",
+    "https://openrouter.ai/docs/sdks/llms-full.txt"
+  ]
+}

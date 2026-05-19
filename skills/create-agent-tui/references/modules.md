@@ -1,522 +1,174 @@
-# Harness Modules
+# Python TUI Optional Modules
 
-Optional architectural modules that extend the core harness. Each section includes purpose, complete code, and how to wire it into `agent.ts` and `cli.ts`.
-
-## Contents
-
-- [Session Persistence](#session-persistence) — JSONL conversation log (DEFAULT ON)
-- [Context Compaction](#context-compaction) — summarize older messages
-- [System Prompt Composition](#system-prompt-composition) — dynamic instructions from context files
-- [Tool Approval](#tool-approval) — gate dangerous tools behind user confirmation
-- [Structured Event Logging](#structured-event-logging) — emit events for observability
-
----
+These modules extend the generated harness without changing the core agent loop. Add only the modules the user asks for.
 
 ## Session Persistence
 
-JSONL (newline-delimited JSON) append-only log for crash-safe conversation persistence. Pattern from pi-mono's session manager.
-
-### src/session.ts
+`src/session.py` stores messages as JSON lines.
 
 ```python
-import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
-import { join } from 'path';
+from __future__ import annotations
 
-type Message = { role: string; content: string; [key: string]: unknown };
+from datetime import datetime, timezone
+from pathlib import Path
+import json
+import uuid
 
-interface SessionEntry {
-  timestamp: string;
-  message: Message;
-}
+Message = dict[str, object]
 
-export function initSessionDir(dir: string): void {
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-}
+def init_session_dir(directory: str) -> Path:
+    path = Path(directory).expanduser()
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
-export function saveMessage(sessionPath: string, message: Message): void {
-  const entry: SessionEntry = {
-    timestamp: new Date().toISOString(),
-    message,
-  };
-  appendFileSync(sessionPath, JSON.stringify(entry) + '\n');
-}
+def new_session_path(directory: str) -> Path:
+    session_dir = init_session_dir(directory)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    return session_dir / f"{stamp}-{uuid.uuid4().hex[:8]}.jsonl"
 
-export function loadSession(sessionPath: string): Message[] {
-  if (!existsSync(sessionPath)) return [];
+def save_message(session_path: Path, message: Message) -> None:
+    entry = {"timestamp": datetime.now(timezone.utc).isoformat(), "message": message}
+    with session_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-  return readFileSync(sessionPath, 'utf-8')
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      try {
-        const entry: SessionEntry = JSON.parse(line);
-        return entry.message;
-      } catch {
-        return null;
-      }
-    })
-    .filter((m): m is Message => m !== null);
-}
-
-export function listSessions(dir: string): string[] {
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((f) => f.endsWith('.jsonl'))
-    .sort();
-}
-
-export function newSessionPath(dir: string): string {
-  const id = new Date().toISOString().replace(/[:.]/g, '-');
-  return join(dir, `${id}.jsonl`);
-}
+def load_session(session_path: Path) -> list[Message]:
+    messages = []
+    if not session_path.exists():
+        return messages
+    for line in session_path.read_text(encoding="utf-8").splitlines():
+        entry = json.loads(line)
+        message = entry.get("message")
+        if isinstance(message, dict):
+            messages.append(message)
+    return messages
 ```
-
-### Integration
-
-In `cli.ts`, wrap the message loop:
-
-```python
-import { initSessionDir, loadSession, saveMessage, newSessionPath } from './session.js';
-
-// At startup:
-initSessionDir(config.sessionDir);
-const sessionPath = newSessionPath(config.sessionDir);
-const messages = loadSession(sessionPath); // empty for new, or pass existing path
-
-// In the REPL loop, build the input from history + new message:
-messages.push({ role: 'user', content: input });
-saveMessage(sessionPath, { role: 'user', content: input });
-
-const agentInput = messages.length > 1 ? messages : input;
-const result = await runAgentWithRetry(config, agentInput, {
-  onEvent: (e) => {
-    if (e.type === 'text') onText(e.delta);
-  },
-});
-
-messages.push({ role: 'assistant', content: result.text });
-saveMessage(sessionPath, { role: 'assistant', content: result.text });
-```
-
----
 
 ## Context Compaction
 
-When conversation history grows too long, summarize older messages to fit within the model's context window. Pattern from pi-mono's compaction with file tracking.
-
-### src/compaction.ts
-
 ```python
-import { OpenRouter } from '@openrouter/agent';
+import requests
 
-type Message = { role: string; content: string; [key: string]: unknown };
 
-interface CompactionConfig {
-  /** Max messages before triggering compaction */
-  threshold: number;
-  /** Number of recent messages to preserve verbatim */
-  keepRecent: number;
-  /** Model to use for summarization */
-  model: string;
-}
+def compact_messages(messages: list[dict], config: dict) -> list[dict]:
+    keep_recent = int(config.get("keep_recent", 8))
+    if len(messages) <= keep_recent + 4:
+        return messages
 
-const DEFAULTS: CompactionConfig = {
-  threshold: 40,
-  keepRecent: 10,
-  model: 'openai/gpt-4.1-mini',
-};
-
-/**
- * Walk the initial cut point forward until we land somewhere that doesn't
- * split a tool turn. A tool turn looks like:
- *
- *   assistant (with tool_calls) → tool (result) × N → assistant (text)
- *
- * If the boundary falls between the assistant-with-calls and its tool
- * results, the summarized half would end with an unresolved call and the
- * kept half would start with orphaned results — the model sees a
- * half-finished turn and gets confused. Pi, OpenClaw, and Claude Code all
- * enforce this invariant in their compaction paths.
- *
- * Safe cut points are before a user message or before a plain assistant
- * message with no pending tool_calls.
- */
-function findSafeBoundary(messages: Message[], cut: number): number {
-  while (cut < messages.length) {
-    const msg = messages[cut];
-
-    // Orphaned tool result at the boundary — step past it so the pair
-    // stays together on the summarized side.
-    if (msg.role === 'tool') { cut++; continue; }
-
-    // Assistant with unresolved tool_calls — step past it and any
-    // trailing tool results from the same turn.
-    const toolCalls = (msg as { tool_calls?: unknown[] }).tool_calls;
-    if (msg.role === 'assistant' && Array.isArray(toolCalls) && toolCalls.length > 0) {
-      cut++;
-      while (cut < messages.length && messages[cut].role === 'tool') cut++;
-      continue;
-    }
-
-    break;
-  }
-  return cut;
-}
-
-export async function compactMessages(
-  client: OpenRouter,
-  messages: Message[],
-  config: Partial<CompactionConfig> = {},
-): Promise<Message[]> {
-  const opts = { ...DEFAULTS, ...config };
-
-  if (messages.length <= opts.threshold) return messages;
-
-  const idealCut = messages.length - opts.keepRecent;
-  const safeCut = findSafeBoundary(messages, idealCut);
-
-  // If the boundary walked all the way to the end (rare: every remaining
-  // message is part of one giant tool turn), give up on compacting rather
-  // than summarize everything and leave nothing behind.
-  if (safeCut >= messages.length) return messages;
-
-  const toSummarize = messages.slice(0, safeCut);
-  const toKeep = messages.slice(safeCut);
-
-  const summaryResult = client.callModel({
-    model: opts.model,
-    instructions:
-      'Summarize the following conversation concisely. Preserve key facts, decisions, file paths mentioned, and tool results. Output only the summary.',
-    input: toSummarize.map((m) => `${m.role}: ${m.content}`).join('\n\n'),
-  });
-
-  const summary = await summaryResult.getText();
-
-  return [
-    { role: 'system', content: `[Conversation summary]\n${summary}` },
-    ...toKeep,
-  ];
-}
+    older = messages[:-keep_recent]
+    recent = messages[-keep_recent:]
+    summary_prompt = "Summarize this conversation for future turns:\n" + repr(older)
+    response = requests.post(
+        "https://openrouter.ai/api/v1/responses",
+        headers=config["headers"],
+        json={"model": config["summary_model"], "input": summary_prompt},
+        timeout=60,
+    )
+    response.raise_for_status()
+    summary = response.json()["output"][0]["content"][0]["text"]
+    return [{"role": "system", "content": "Conversation summary: " + summary}, *recent]
 ```
-
-### Integration
-
-In `agent.ts`, call before `callModel`:
-
-```python
-import { compactMessages } from './compaction.js';
-
-// Inside runAgent, when input is a message array, compact before calling callModel:
-if (Array.isArray(input)) {
-  const client = new OpenRouter({ apiKey: config.apiKey });
-  input = await compactMessages(client, input as Message[], {
-    threshold: 40,
-    keepRecent: 10,
-  });
-}
-// Then pass input to callModel as usual
-```
-
----
 
 ## System Prompt Composition
 
-Compose the system prompt from a static base plus dynamically loaded context files (similar to how pi-mono loads AGENTS.md/CLAUDE.md from project directories).
-
-### src/system-prompt.ts
-
 ```python
-import { readFileSync, existsSync } from 'fs';
-import { resolve, join } from 'path';
+from pathlib import Path
 
-interface PromptConfig {
-  /** Base system prompt */
-  base: string;
-  /** File names to look for in the project directory */
-  contextFiles: string[];
-  /** Directory to search for context files */
-  projectDir: string;
-}
 
-export function composeSystemPrompt(config: PromptConfig): string {
-  const parts = [config.base];
-
-  for (const filename of config.contextFiles) {
-    const filePath = resolve(config.projectDir, filename);
-    if (existsSync(filePath)) {
-      const content = readFileSync(filePath, 'utf-8');
-      parts.push(`\n## ${filename}\n\n${content}`);
-    }
-  }
-
-  return parts.join('\n');
-}
+def compose_system_prompt(base: str, project_dir: str, context_files: list[str]) -> str:
+    parts = [base]
+    root = Path(project_dir)
+    for name in context_files:
+        file_path = root / name
+        if file_path.exists() and file_path.is_file():
+            parts.append(f"\n# {name}\n{file_path.read_text(encoding='utf-8', errors='replace')}")
+    return "\n".join(parts)
 ```
 
-### Integration
-
-In `agent.ts`, use as the `instructions` parameter:
+## Approval Flow
 
 ```python
-import { composeSystemPrompt } from './system-prompt.js';
+from collections.abc import Callable
 
-const instructions = composeSystemPrompt({
-  base: config.systemPrompt,
-  contextFiles: ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'],
-  projectDir: process.cwd(),
-});
+ApprovalCallback = Callable[[str, dict], bool]
 
-// Pass to callModel:
-client.callModel({ instructions, ... });
+
+def should_require_approval(tool_name: str, args: dict) -> bool:
+    if tool_name in {"file_write", "file_edit"}:
+        return True
+    if tool_name == "shell":
+        command = str(args.get("command", ""))
+        risky_words = ("rm ", "sudo ", "chmod ", "chown ", "mkfs")
+        return any(word in command for word in risky_words)
+    return False
+
+
+def execute_with_approval(tool_name: str, args: dict, approve: ApprovalCallback, execute) -> dict:
+    if should_require_approval(tool_name, args) and not approve(tool_name, args):
+        return {"approved": False, "error": "tool call rejected"}
+    result = execute(tool_name, args)
+    result["approved"] = True
+    return result
 ```
 
----
-
-## Tool Approval
-
-Gate dangerous tools behind user confirmation. Uses `requireApproval` from `@openrouter/agent/tool` plus a session-scoped approval cache. Pattern from Codex's approval flow.
-
-### Adding requireApproval to tools
-
-For tools that should require approval, set `requireApproval: true` in the tool definition:
+## Structured Logging
 
 ```python
-export const shellTool = tool({
-  name: 'shell',
-  description: 'Execute a shell command',
-  inputSchema: z.object({ command: z.string(), timeout: z.number().optional() }),
-  requireApproval: true,  // <-- user must confirm before execution
-  execute: async ({ command, timeout }) => { /* ... */ },
-});
+from datetime import datetime, timezone
+from pathlib import Path
+import json
+import sys
+
+
+def make_event(event_type: str, **data) -> dict:
+    return {"type": event_type, "time": datetime.now(timezone.utc).isoformat(), **data}
+
+
+def stderr_json_handler(event: dict) -> None:
+    print(json.dumps(event, default=str), file=sys.stderr, flush=True)
+
+
+def file_log_handler(path: str):
+    log_path = Path(path)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def handle(event: dict) -> None:
+        with log_path.open("a", encoding="utf-8") as handle_file:
+            handle_file.write(json.dumps(event, default=str) + "\n")
+
+    return handle
 ```
 
-Or use a function for conditional approval based on the config:
+## Output Schema Validation
 
 ```python
-export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-only') {
-  return tool({
-    name: 'shell',
-    description: 'Execute a shell command',
-    inputSchema: z.object({ command: z.string(), timeout: z.number().optional() }),
-    requireApproval: approvalPolicy === 'always'
-      ? true
-      : approvalPolicy === 'never'
-        ? false
-        : ({ command }) => /\brm\b|sudo|chmod|chown|\bdd\b|mkfs/.test(command),
-    execute: async ({ command, timeout }) => { /* ... */ },
-  });
-}
+import json
+from pathlib import Path
+from jsonschema import Draft202012Validator
+
+
+def load_schema(path: str) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def validate_output(text: str, schema: dict) -> tuple[bool, str | None]:
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return False, str(exc)
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(data), key=lambda err: err.path)
+    if errors:
+        return False, errors[0].message
+    return True, None
 ```
 
-### Integration
-
-Add `approvalPolicy` to the config:
+## Webhook Notifications
 
 ```python
-// In config.ts AgentConfig interface:
-approvalPolicy: 'always' | 'never' | 'dangerous-only';
+import requests
 
-// In tools/index.ts, create tools conditionally:
-import { createShellTool } from './shell.js';
 
-export function buildTools(config: AgentConfig) {
-  return [
-    fileReadTool,   // never needs approval
-    fileWriteTool,  // maybe
-    createShellTool(config.approvalPolicy),
-  ];
-}
+def notify_webhook(url: str, payload: dict) -> None:
+    response = requests.post(url, json=payload, timeout=10)
+    response.raise_for_status()
 ```
-
----
-
-## Structured Event Logging
-
-Emit structured events for tool calls, API requests, and errors. Entry point decides how to render them. Pattern from Codex's tracing.
-
-### src/logger.ts
-
-```python
-type EventType = 'tool_call' | 'tool_result' | 'api_request' | 'api_error' | 'turn_start' | 'turn_end';
-
-interface AgentEvent {
-  type: EventType;
-  timestamp: string;
-  data: Record<string, unknown>;
-}
-
-type EventHandler = (event: AgentEvent) => void;
-
-export class AgentLogger {
-  private handlers: EventHandler[] = [];
-
-  on(handler: EventHandler): void {
-    this.handlers.push(handler);
-  }
-
-  emit(type: EventType, data: Record<string, unknown>): void {
-    const event: AgentEvent = {
-      type,
-      timestamp: new Date().toISOString(),
-      data,
-    };
-    for (const handler of this.handlers) {
-      handler(event);
-    }
-  }
-}
-
-/** Default handler that logs to stderr as JSON */
-export function consoleLogHandler(event: AgentEvent): void {
-  process.stderr.write(JSON.stringify(event) + '\n');
-}
-```
-
-### Integration
-
-In `agent.ts`, emit events in callbacks:
-
-```python
-import { AgentLogger } from './logger.js';
-
-export async function runAgent(config: AgentConfig, input, options?) {
-  const logger = options?.logger ?? new AgentLogger();
-
-  const result = client.callModel({
-    // ...
-    onTurnStart: async (ctx) => {
-      logger.emit('turn_start', { turn: ctx.numberOfTurns });
-    },
-    onTurnEnd: async (ctx) => {
-      logger.emit('turn_end', { turn: ctx.numberOfTurns });
-    },
-  });
-  // ...
-}
-```
-
-In `cli.ts`, attach a handler:
-
-```python
-import { AgentLogger, consoleLogHandler } from './logger.js';
-
-const logger = new AgentLogger();
-logger.on(consoleLogHandler); // or a custom handler
-```
-
----
-
-## `@`-file References
-
-Let users type `@filename` to attach file content to their message. Before sending to the agent, scan the input for `@path` tokens, read each file, and prepend the content.
-
-### Integration
-
-In `cli.ts`, before pushing the user message:
-
-```python
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
-
-function expandFileRefs(input: string): string {
-  const parts: string[] = [];
-  const pattern = /@([\w.\/\-]+)/g;
-  let match;
-  while ((match = pattern.exec(input)) !== null) {
-    const filePath = resolve(match[1]);
-    if (existsSync(filePath)) {
-      try {
-        const content = readFileSync(filePath, 'utf-8');
-        parts.push(`<file path="${match[1]}">\n${content}\n</file>`);
-      } catch { /* skip unreadable */ }
-    }
-  }
-  if (!parts.length) return input;
-  return parts.join('\n') + '\n\n' + input;
-}
-
-// Before messages.push:
-const expanded = expandFileRefs(trimmed);
-messages.push({ role: 'user', content: expanded });
-```
-
-Optional: add tab completion for `@` using `rl.completer` to fuzzy-match files in the working directory.
-
----
-
-## `!` Shell Shortcut
-
-`!command` runs a shell command and injects stdout into context as a user message, without going through a tool call. `!!command` runs silently (output not shown).
-
-### Integration
-
-In `cli.ts`, before command dispatch:
-
-```python
-import { execSync } from 'child_process';
-
-if (trimmed.startsWith('!')) {
-  const silent = trimmed.startsWith('!!');
-  const cmd = trimmed.slice(silent ? 2 : 1).trim();
-  if (!cmd) { rl.prompt(); return; }
-  try {
-    const output = execSync(cmd, { encoding: 'utf-8', timeout: 30000, maxBuffer: 256 * 1024 }).trim();
-    if (!silent) console.log(`${GRAY}${output}${RESET}`);
-    messages.push({ role: 'user', content: `Shell output of \`${cmd}\`:\n\`\`\`\n${output}\n\`\`\`` });
-  } catch (err: any) {
-    console.log(`${YELLOW}  ${err.message}${RESET}`);
-  }
-  rl.prompt();
-  return;
-}
-```
-
----
-
-## Multi-line Input
-
-Replace readline with raw terminal mode to support Shift+Enter for newlines. Enter sends the message.
-
-### src/multi-line-input.ts
-
-```python
-import { emitKeypressEvents } from 'readline';
-
-export function readMultiLine(prompt: string): Promise<string> {
-  return new Promise((resolve) => {
-    process.stdout.write(prompt);
-    emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-
-    let buffer = '';
-    const onKeypress = (_ch: string, key: { name: string; shift?: boolean; ctrl?: boolean }) => {
-      if (key.ctrl && key.name === 'c') { process.exit(0); }
-      if (key.name === 'return' && !key.shift) {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        process.stdin.removeListener('keypress', onKeypress);
-        process.stdout.write('\n');
-        resolve(buffer);
-        return;
-      }
-      if (key.name === 'return' && key.shift) {
-        buffer += '\n';
-        process.stdout.write('\n');
-        return;
-      }
-      if (key.name === 'backspace') {
-        if (buffer.length) { buffer = buffer.slice(0, -1); process.stdout.write('\b \b'); }
-        return;
-      }
-      if (_ch) { buffer += _ch; process.stdout.write(_ch); }
-    };
-    process.stdin.on('keypress', onKeypress);
-  });
-}
-```
-
-### Integration
-
-Replace the `rl.on('line')` loop with calls to `readMultiLine(prompt)` in a `while` loop.
-

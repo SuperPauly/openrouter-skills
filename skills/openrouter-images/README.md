@@ -1,28 +1,31 @@
-# openrouter-images
+# OpenRouter Images
 
-Generate images from text prompts and edit existing images via OpenRouter's chat completions API with image modalities.
+Generate and edit images from Python using OpenRouter image-capable models.
 
-## Install
-
-With the [GitHub CLI](https://cli.github.com/) (v2.90.0+):
+## Setup
 
 ```bash
-gh skill install OpenRouterTeam/skills openrouter-images
+pip install requests
+OPENROUTER_API_KEY=your-key python3 scripts/example.py
 ```
 
-Works with Claude Code, Cursor, Codex, OpenCode, Gemini CLI, Windsurf, and [many more agents](https://cli.github.com/manual/gh_skill_install). Add `--scope user` to install across every project for your current agent, or `--agent claude-code` to target a specific agent.
+## Files
 
-For other install methods (Claude Code plugin marketplace, Cursor Rules, etc.) see the [root README](../../README.md#installing).
+- `scripts/lib.py`: shared Python request helpers.
+- `scripts/example.py`: minimal runnable example for this skill.
 
-## Prerequisites
+## Pattern
 
-The `OPENROUTER_API_KEY` environment variable must be set. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
+```python
+import os
+import requests
 
-## What it covers
-
-See [SKILL.md](SKILL.md) for the full reference, including:
-
-- Text-to-image generation with aspect ratio and model overrides (`generate.ts`)
-- Editing and transforming existing images from a text prompt (`edit.ts`)
-- Selecting specific image models (e.g. `gemini-2.5-flash-image`)
-- Decision tree for picking between generate vs edit flows
+response = requests.post(
+    "https://openrouter.ai/api/v1/responses",
+    headers={"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}", "Content-Type": "application/json"},
+    json={"model": "openai/gpt-4o", "input": "Hello"},
+    timeout=60,
+)
+response.raise_for_status()
+print(response.json())
+```

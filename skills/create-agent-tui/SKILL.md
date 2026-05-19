@@ -1,11 +1,11 @@
 ---
 name: create-agent-tui
-description: Scaffolds a complete agent TUI in Python using the OpenRouter Responses API — like create-react-app for terminal agents. Generates a customizable terminal interface with three input styles, four tool display modes, ASCII banners, streaming output, session persistence, and configurable tools. Use when building an agent, creating a TUI, scaffolding an agent project, or building a coding assistant.
+description: Scaffolds a complete agent TUI in Python using the OpenRouter Responses API — like create-react-app for terminal agents. Generates a customizable terminal UI with three input styles, four tool display modes, ASCII banners, streaming output, session persistence, and configurable tools. Use when building an agent, creating a TUI, scaffolding an agent project, or building a coding assistant.
 ---
 
 # Create Agent TUI
 
-Scaffolds a complete agent TUI in Python targeting OpenRouter. The generated project uses `requests` for the inner loop (model calls, tool execution, stop conditions) and provides the outer shell: a customizable terminal interface, configuration, session management, tool definitions, and an entry point.
+Scaffolds a complete agent TUI in Python targeting OpenRouter. The generated project uses `requests` for the inner loop (model calls, tool execution, stop conditions) and provides the outer shell: a customizable terminal UI, configuration, session management, tool definitions, and an entry point.
 
 Architecture draws from three production agent systems:
 - **pi-mono/coding-agent** — three-layer separation, JSONL sessions, pluggable tool operations
@@ -87,7 +87,7 @@ Server tools go in the `tools` array alongside user-defined tools. No client cod
 | `/help` | ON | List available commands |
 | `/compact` | OFF | Manually trigger context compaction |
 | `/session` | OFF | Show session metadata and token usage |
-| `/export` | OFF | Save conversation as Markdown |
+| `/save` | OFF | Save conversation as Markdown |
 
 When slash commands are enabled, generate `src/commands.py` with a command registry. See [references/slash-commands.md](references/slash-commands.md) for specs.
 
@@ -606,6 +606,6 @@ For content beyond the core files:
 - **[references/tool-display.md](references/tool-display.md)** — Tool display styles: emoji, grouped, minimal; TuiRenderer class, per-tool colors, formatters
 - **[references/input-styles.md](references/input-styles.md)** — Input styles: block (background box), bordered (horizontal lines), plain (simple caret)
 - **[references/loader.md](references/loader.md)** — Loader animations: gradient (scrolling shimmer), spinner (braille dots), minimal (trailing dots)
-- **[references/slash-commands.md](references/slash-commands.md)** — Slash command registry: /model, /new, /help, /compact, /session, /export
+- **[references/slash-commands.md](references/slash-commands.md)** — Slash command registry: /model, /new, /help, /compact, /session, /save
 - **[references/system-prompt.md](references/system-prompt.md)** — Default system prompt, buildSystemPrompt(), customization guide
 - **[references/server-entry-points.md](references/server-entry-points.md)** — Flask API server entry point with SSE streaming, plus extension points (MCP, WebSocket, dynamic models)

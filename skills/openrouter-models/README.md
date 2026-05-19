@@ -1,29 +1,31 @@
-# openrouter-models
+# OpenRouter Models
 
-Discover, search, and compare the 300+ AI models available on OpenRouter. Query live data including pricing, context lengths, per-provider latency and uptime, throughput, supported modalities, and supported parameters.
+List models, compare pricing, inspect context lengths, and resolve model names from Python.
 
-## Install
-
-With the [GitHub CLI](https://cli.github.com/) (v2.90.0+):
+## Setup
 
 ```bash
-gh skill install OpenRouterTeam/skills openrouter-models
+pip install requests
+OPENROUTER_API_KEY=your-key python3 scripts/example.py
 ```
 
-Works with Claude Code, Cursor, Codex, OpenCode, Gemini CLI, Windsurf, and [many more agents](https://cli.github.com/manual/gh_skill_install). Add `--scope user` to install across every project for your current agent, or `--agent claude-code` to target a specific agent.
+## Files
 
-For other install methods (Claude Code plugin marketplace, Cursor Rules, etc.) see the [root README](../../README.md#installing).
+- `scripts/lib.py`: shared Python request helpers.
+- `scripts/example.py`: minimal runnable example for this skill.
 
-## Prerequisites
+## Pattern
 
-`OPENROUTER_API_KEY` is optional for most scripts. It is only required for `get-endpoints.ts` (provider performance data). Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
+```python
+import os
+import requests
 
-## What it covers
-
-See [SKILL.md](SKILL.md) for the full reference, including:
-
-- Listing and sorting models by newest, price, or throughput (`list-models.ts`)
-- Filtering by category (programming, roleplay, vision, etc.)
-- Looking up a specific model's pricing, context length, and modalities
-- Per-provider latency, uptime, and throughput via `get-endpoints.ts`
-- Fuzzy model-name resolution
+response = requests.post(
+    "https://openrouter.ai/api/v1/responses",
+    headers={"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}", "Content-Type": "application/json"},
+    json={"model": "openai/gpt-4o", "input": "Hello"},
+    timeout=60,
+)
+response.raise_for_status()
+print(response.json())
+```

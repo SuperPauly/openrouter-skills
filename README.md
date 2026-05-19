@@ -1,12 +1,12 @@
 # OpenRouter Skills
 
-A collection of [Agent Skills](https://agentskills.io/home) for building with [OpenRouter](https://openrouter.ai) — a unified API for [600+ AI models](https://openrouter.ai/models).
+A collection of Agent Skills for building with OpenRouter, a unified API for hundreds of AI models.
 
 ## Installing
 
-These skills work with any agent that supports the Agent Skills standard, including Claude Code, Cursor, OpenCode, OpenAI Codex, and Pi.
+These skills work with agents that support the Agent Skills standard, including Claude Code, Cursor, OpenCode, OpenAI Codex, and Pi.
 
-For agents that support plugins, installing via the native plugin system is recommended as skills will auto-update.
+For agents that support plugins, installing through the native plugin system is recommended because skills can update automatically.
 
 ### Claude Code
 
@@ -17,7 +17,7 @@ For agents that support plugins, installing via the native plugin system is reco
 
 ### Cursor
 
-Add via **Settings > Rules > Add Rule > Remote Rule (Github)** with `OpenRouterTeam/skills`.
+Add a remote rule from `OpenRouterTeam/skills` in Cursor settings.
 
 ### OpenCode
 
@@ -27,53 +27,42 @@ cp -r /tmp/openrouter-skills/skills/* ~/.config/opencode/skills/
 rm -rf /tmp/openrouter-skills
 ```
 
-### GitHub CLI (`gh skill`)
-
-Works with Claude Code, Cursor, OpenCode, Codex, Gemini CLI, Windsurf, and [many more agents](https://cli.github.com/manual/gh_skill_install). Requires [GitHub CLI](https://cli.github.com/) v2.90.0 or later.
-
-Install all OpenRouter skills:
+### GitHub CLI
 
 ```bash
 gh skill install OpenRouterTeam/skills
 ```
 
-#### Installing a single skill
-
-Pass the skill name as the second argument — see each skill's README (linked in the table below) for the exact name and a copy‑pasteable command.
+Install one skill by name:
 
 ```bash
 gh skill install OpenRouterTeam/skills openrouter-images
 ```
 
-By default skills install at project scope (inside the current git repo). To make a skill available across every project for your current agent, add `--scope user`:
-
-```bash
-gh skill install OpenRouterTeam/skills openrouter-images --scope user
-```
-
-To target a specific agent, add `--agent` (e.g. `--agent claude-code`, `--agent cursor`). [Full flag reference](https://cli.github.com/manual/gh_skill_install).
+Use `--scope user` to install for the current agent account or `--agent claude-code` to target a specific agent.
 
 ## Skills
 
-Skills are contextual and auto-loaded based on your conversation. When a request matches a skill's triggers, the agent loads and applies the relevant skill to provide accurate, up-to-date guidance.
-
 | Skill | Useful for |
 |-------|------------|
-| [create-agent-tui](skills/create-agent-tui/README.md) | Scaffolds a complete agent TUI in Python — like `create-react-app` for terminal agents. Customizable input styles, tool display modes, ASCII banners, loaders, session persistence, and [14 built-in tools](skills/create-agent-tui/README.md) |
-| [create-headless-agent](skills/create-headless-agent/README.md) | Scaffolds a headless agent in Python + Bun — for CLI tools, API servers, queue workers, and pipelines. No terminal UI. [12 built-in tools](skills/create-headless-agent/README.md), session persistence, output schema validation, and webhook notifications |
-| [openrouter-python-sdk](skills/openrouter-python-sdk/README.md) | Complete reference for integrating with [600+ AI models](https://openrouter.ai/models) through the OpenRouter Python SDK using the `callModel` pattern |
-| [openrouter-agent-migration](skills/openrouter-agent-migration/README.md) | Migrating from `@openrouter/sdk` to the standalone `@openrouter/agent` package for `callModel`, `tool()`, stop conditions, and streaming helpers |
-| [openrouter-models](skills/openrouter-models/README.md) | Querying available models, comparing pricing, checking context lengths, finding provider performance, and fuzzy model name resolution |
-| [openrouter-images](skills/openrouter-images/README.md) | Generating images from text prompts and editing existing images using OpenRouter's image generation models |
-| [openrouter-oauth](skills/openrouter-oauth/README.md) | Framework-agnostic [Sign In with OpenRouter](https://openrouterteam.github.io/sign-in-with-openrouter/) — OAuth PKCE authentication using plain `fetch`, no SDK or dependencies required. Includes a copy-pasteable auth module and sign-in button component |
+| [create-agent-tui](skills/create-agent-tui/README.md) | Scaffolds a complete Python agent TUI with input styles, tool display modes, banners, loaders, session persistence, and local tools. |
+| [create-headless-agent](skills/create-headless-agent/README.md) | Scaffolds a headless Python agent for CLI tools, API services, queue workers, and pipelines. |
+| [openrouter-python-sdk](skills/openrouter-python-sdk/README.md) | Complete Python reference for OpenRouter chat, Responses, streaming, tool calling, and model metadata. |
+| [openrouter-agent-migration](skills/openrouter-agent-migration/README.md) | Converts older OpenRouter agent examples to Python using the OpenRouter SDK or low-level Responses API requests. |
+| [openrouter-models](skills/openrouter-models/README.md) | Querying available models, comparing pricing, checking context lengths, and resolving model names. |
+| [openrouter-images](skills/openrouter-images/README.md) | Generating and editing images with OpenRouter image models from Python. |
+| [openrouter-oauth](skills/openrouter-oauth/README.md) | Sign in with OpenRouter using OAuth PKCE and Python server callbacks. |
+| [openrouter-stt](skills/openrouter-stt/README.md) | Speech-to-text transcription through OpenRouter. |
+| [openrouter-tts](skills/openrouter-tts/README.md) | Text-to-speech generation through OpenRouter. |
+| [openrouter-video](skills/openrouter-video/README.md) | Video generation workflows through OpenRouter. |
 
 ## Environment
 
-All scripts require an `OPENROUTER_API_KEY` environment variable. Get one at [openrouter.ai/keys](https://openrouter.ai/keys).
+Most examples read `OPENROUTER_API_KEY` from the environment. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
 
 ## Resources
 
 - [OpenRouter Documentation](https://openrouter.ai/docs)
 - [OpenRouter API Reference](https://openrouter.ai/docs/api-reference)
-- [OpenRouter Python SDK](https://www.npmjs.com/package/openrouter)
+- [OpenRouter Python SDK](https://openrouter.ai/docs/client-sdks/python/overview)
 - [OpenRouter Models](https://openrouter.ai/models)
