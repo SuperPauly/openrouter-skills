@@ -86,21 +86,66 @@ Remove the verifier from `sessionStorage` before or after the exchange.
 Drop-in module implementing the full PKCE flow. Reduces risk of getting base64url encoding, sessionStorage handling, or the key exchange wrong.
 
 ```python
-import requests
+// lib/openrouter-auth.ts
+const STORAGE_KEY = "openrouter_api_key";
+const VERIFIER_KEY = "openrouter_code_verifier";
 
-def exchange_code_for_token(client_id: str, client_secret: str, code: str) -> str:
-    response = requests.post(
-        "https://openrouter.ai/api/v1/oauth/token",
-        json={
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "grant_type": "authorization_code",
-            "code": code,
-        },
-        timeout=30,
-    )
-    response.raise_for_status()
-    return response.json()["access_token"]
+type AuthListener = () => void;
+const listeners = new Set<AuthListener>();
+export const onAuthChange = (fn: AuthListener) => { listeners.add(fn); return () => listeners.delete(fn); };
+const notify = () => listeners.forEach((fn) => fn());
+
+// Cross-tab sync: other tabs update when user signs in/out
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => { if (e.key === STORAGE_KEY) notify(); });
+}
+
+export const getApiKey = (): string | null =>
+  typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+
+export const setApiKey = (key: string) => { localStorage.setItem(STORAGE_KEY, key); notify(); };
+export const clearApiKey = () => { localStorage.removeItem(STORAGE_KEY); notify(); };
+
+// Guard: only process ?code= if we initiated an OAuth flow in this tab
+export const hasOAuthCallbackPending = (): boolean =>
+  typeof window !== "undefined" && sessionStorage.getItem(VERIFIER_KEY) !== null;
+
+function generateCodeVerifier(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function computeS256Challenge(verifier: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export async function initiateOAuth(callbackUrl?: string): Promise<void> {
+  const verifier = generateCodeVerifier();
+  sessionStorage.setItem(VERIFIER_KEY, verifier);
+  const challenge = await computeS256Challenge(verifier);
+  const url = callbackUrl ?? window.location.origin + window.location.pathname;
+  window.location.href = `https://openrouter.ai/auth?${new URLSearchParams({
+    callback_url: url, code_challenge: challenge, code_challenge_method: "S256",
+  })}`;
+}
+
+export async function handleOAuthCallback(code: string): Promise<void> {
+  const verifier = sessionStorage.getItem(VERIFIER_KEY);
+  if (!verifier) throw new Error("Missing code verifier");
+  sessionStorage.removeItem(VERIFIER_KEY);
+  const res = await fetch("https://openrouter.ai/api/v1/auth/keys", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, code_verifier: verifier, code_challenge_method: "S256" }),
+  });
+  if (!res.ok) throw new Error(`Key exchange failed (${res.status})`);
+  const { key } = await res.json();
+  setApiKey(key);
+}
 ```
 
 ---
@@ -154,20 +199,17 @@ For dark mode support, add dark variants: swap light backgrounds to dark (`dark:
 ## Using the API Key
 
 ```python
-import requests
-
-response = requests.post(
-    "https://openrouter.ai/api/v1/responses",
-    headers={
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    },
-    json={
-        "model": "openai/gpt-4o-mini",
-        "input": [{"type": "message", "role": "user", "content": "Hello!"}],
-    },
-)
-response.raise_for_status()
+const response = await fetch("https://openrouter.ai/api/v1/responses", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "openai/gpt-4o-mini",
+    input: [{ type: "message", role: "user", content: "Hello!" }],
+  }),
+});
 ```
 
 ```python

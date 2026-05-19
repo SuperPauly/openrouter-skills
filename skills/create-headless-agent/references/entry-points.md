@@ -19,13 +19,216 @@ The primary entry point. Accepts a prompt via `--prompt`, positional argument, o
 The `#!/usr/bin/env bun` shebang on line 1 is required so the OS can execute the file directly when it's invoked via the `bin` symlink created by `bun link`. Without it, the linked binary fails with "Exec format error".
 
 ```python
-import argparse
+#!/usr/bin/env bun
+import { parseArgs } from 'util';
+import { readFileSync } from 'fs';
+import { loadConfig } from './config.js';
+import { runAgentWithRetry, type AgentEvent } from './agent.js';
+import { initSessionDir, saveMessage, newSessionPath } from './session.js';
 
-def parse_cli_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="openrouter/auto")
-    parser.add_argument("--session-id")
-    return parser.parse_args()
+// ── Argument parsing ────────────────────────────────────────────────
+// Pre-scan argv for output mode so the catch below can format errors
+// (unknown flag, bad schema path, etc.) according to --json / --quiet.
+
+const argv = Bun.argv.slice(2);
+const preMode: 'text' | 'json' | 'quiet' =
+  argv.includes('--json') || argv.includes('-j') ? 'json' :
+  argv.includes('--quiet') || argv.includes('-q') ? 'quiet' : 'text';
+
+function reportError(err: any): never {
+  const message = err?.message ?? String(err);
+  if (preMode === 'json') process.stdout.write(JSON.stringify({ type: 'error', message }) + '\n');
+  else if (preMode !== 'quiet') process.stderr.write(`Error: ${message}\n`);
+  process.exit(1);
+}
+
+let values: Record<string, any>;
+let positionals: string[];
+try {
+  const parsed = parseArgs({
+    args: argv,
+    options: {
+      prompt:        { type: 'string',  short: 'p' },
+      json:          { type: 'boolean', short: 'j', default: false },
+      quiet:         { type: 'boolean', short: 'q', default: false },
+      'no-session':  { type: 'boolean', default: false },
+      model:         { type: 'string',  short: 'm' },
+      'max-steps':   { type: 'string' },
+      'max-cost':    { type: 'string' },
+      'output-schema': { type: 'string' },
+      help:          { type: 'boolean', short: 'h', default: false },
+    },
+    allowPositionals: true,
+    strict: true,
+  });
+  values = parsed.values;
+  positionals = parsed.positionals;
+} catch (err) {
+  reportError(err);
+}
+
+// ── Help ────────────────────────────────────────────────────────────
+
+if (values.help) {
+  console.log(`Usage: bun run src/cli.ts [options] [prompt]
+
+Options:
+  -p, --prompt <text>       Prompt to send to the agent
+  -j, --json                Output NDJSON event stream instead of text
+  -q, --quiet               No output; exit 0 on success, 1 on error
+      --no-session          Disable session persistence for this run
+  -m, --model <model>       Override the model (e.g. anthropic/claude-sonnet-4)
+      --max-steps <n>       Maximum number of agent steps
+      --max-cost <n>        Maximum cost in dollars
+      --output-schema <f>   Path to a JSON Schema file to validate output
+  -h, --help                Show this help message
+
+Prompt sources (in priority order):
+  1. --prompt flag
+  2. Positional argument
+  3. Piped stdin (when stdin is not a TTY)
+
+Examples:
+  bun run src/cli.ts --prompt "List all Python files"
+  bun run src/cli.ts "What is 2+2?"
+  echo "Summarize this" | bun run src/cli.ts
+  bun run src/cli.ts --json -p "Search for TODO comments"
+`);
+  process.exit(0);
+}
+
+// ── Resolve prompt ──────────────────────────────────────────────────
+
+let prompt = values.prompt ?? positionals[0];
+
+if (!prompt && !process.stdin.isTTY) {
+  // stdin is piped — read all of it
+  prompt = await Bun.stdin.text();
+  prompt = prompt.trim();
+}
+
+if (!prompt) {
+  console.error('Error: no prompt provided. Use --prompt, a positional arg, or pipe to stdin.');
+  process.exit(1);
+}
+
+// ── Load config and apply overrides ─────────────────────────────────
+
+const config = loadConfig();
+
+if (values.model) config.model = values.model;
+if (values['max-steps']) {
+  const n = Number(values['max-steps']);
+  if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-steps must be a positive number, got: ${values['max-steps']}`);
+  config.maxSteps = n;
+}
+if (values['max-cost']) {
+  const n = Number(values['max-cost']);
+  if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-cost must be a positive number, got: ${values['max-cost']}`);
+  config.maxCost = n;
+}
+
+// ── Load output schema (optional) ──────────────────────────────────
+
+let outputSchema: Record<string, unknown> | undefined;
+if (values['output-schema']) {
+  try {
+    const raw = readFileSync(values['output-schema'], 'utf-8');
+    outputSchema = JSON.parse(raw);
+  } catch (err: any) {
+    console.error(`Error: could not load output schema: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+// ── Session setup ───────────────────────────────────────────────────
+
+let sessionPath: string | undefined;
+if (config.sessionEnabled && !values['no-session']) {
+  initSessionDir(config.sessionDir);
+  sessionPath = newSessionPath(config.sessionDir);
+  saveMessage(sessionPath, { role: 'user', content: prompt });
+}
+
+// ── Run agent ───────────────────────────────────────────────────────
+
+try {
+  let hasEmittedText = false;
+  const result = await runAgentWithRetry(config, prompt, {
+    // outputSchema is validated after the agent returns, not passed in
+    onEvent: (event: AgentEvent) => {
+      if (values.json) {
+        // NDJSON mode: write every event as a JSON line (including turn_end and done)
+        process.stdout.write(JSON.stringify(event) + '\n');
+      } else if (!values.quiet) {
+        // Text mode: stream text deltas, insert newline at turn boundaries
+        if (event.type === 'text') {
+          process.stdout.write(event.delta);
+          hasEmittedText = true;
+        } else if (event.type === 'turn_end' && hasEmittedText) {
+          process.stdout.write('\n');
+        }
+      }
+    },
+  });
+
+  // In text mode, ensure output ends with a newline
+  if (!values.json && !values.quiet) {
+    process.stdout.write('\n');
+  }
+
+  // Persist assistant response
+  if (sessionPath) {
+    saveMessage(sessionPath, { role: 'assistant', content: result.text });
+  }
+
+  // Validate output against schema if provided. Install: `bun add ajv`.
+  if (outputSchema) {
+    const { default: Ajv } = await import('ajv');
+    const ajv = new Ajv({ allErrors: true });
+    const validate = ajv.compile(outputSchema);
+
+    // Models often wrap JSON in markdown fences (```json ... ```) or
+    // include prose around it. Extract the first JSON block permissively.
+    const extractJson = (text: string): string => {
+      const trimmed = text.trim();
+      const fence = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (fence) return fence[1].trim();
+      const objStart = trimmed.indexOf('{');
+      const objEnd = trimmed.lastIndexOf('}');
+      const arrStart = trimmed.indexOf('[');
+      const arrEnd = trimmed.lastIndexOf(']');
+      const useArr = arrStart !== -1 && (objStart === -1 || arrStart < objStart);
+      const start = useArr ? arrStart : objStart;
+      const end = useArr ? arrEnd : objEnd;
+      if (start !== -1 && end > start) return trimmed.slice(start, end + 1);
+      return trimmed;
+    };
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(extractJson(result.text));
+    } catch {
+      console.error('Error: agent output is not valid JSON (output-schema was specified)');
+      process.exit(2);
+    }
+    if (!validate(parsed)) {
+      console.error(`Error: agent output failed schema validation: ${ajv.errorsText(validate.errors)}`);
+      process.exit(2);
+    }
+  }
+
+  process.exit(0);
+} catch (err: any) {
+  if (!values.quiet) {
+    if (values.json) {
+      process.stdout.write(JSON.stringify({ type: 'error', message: err.message }) + '\n');
+    } else {
+      console.error(`Error: ${err.message}`);
+    }
+  }
+  process.exit(1);
+}
 ```
 
 ### Exit codes
@@ -87,16 +290,147 @@ A `Bun.serve()` HTTP server that exposes the agent over a REST API with optional
 ### src/server.ts
 
 ```python
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import json
+import { loadConfig } from './config.js';
+import { runAgentWithRetry, type AgentEvent } from './agent.js';
 
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self) -> None:
-        body = json.dumps({"ok": True}).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(body)
+const config = loadConfig();
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? '*';
+const API_SECRET = process.env.AGENT_API_SECRET;
+const MAX_BODY = 1 * 1024 * 1024; // 1 MB
+
+if (!API_SECRET) {
+  console.warn(
+    'WARNING: AGENT_API_SECRET is not set. All requests will be rejected with 401.\n' +
+    'Set AGENT_API_SECRET=<secret> and send `Authorization: Bearer <secret>` on every request.',
+  );
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
+function corsHeaders(): Record<string, string> {
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
+
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+  });
+}
+
+function unauthorized(): Response {
+  return json({ error: 'Unauthorized' }, 401);
+}
+
+// Fail-closed auth: require AGENT_API_SECRET to be set. The HTTP server
+// exposes shell execution and file mutation — running it unauthenticated
+// is an access-control footgun. See OWASP A01:2021.
+function checkAuth(req: Request): boolean {
+  if (!API_SECRET) return false;
+  return req.headers.get('Authorization') === `Bearer ${API_SECRET}`;
+}
+
+// ── Server ──────────────────────────────────────────────────────────
+
+Bun.serve({
+  port: PORT,
+  // Enforce body limit at the server level — the Content-Length header
+  // check is bypassable (chunked encoding, omitted header). Bun's default
+  // is 128 MB which is too large for an agent RPC endpoint.
+  maxRequestBodySize: MAX_BODY,
+  async fetch(req) {
+    const url = new URL(req.url);
+
+    // CORS preflight
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders() });
+    }
+
+    // Health check
+    if (req.method === 'GET' && url.pathname === '/health') {
+      return json({ ok: true });
+    }
+
+    // Chat endpoint
+    if (req.method === 'POST' && url.pathname === '/chat') {
+      if (!checkAuth(req)) return unauthorized();
+
+      // Enforce body size limit
+      const contentLength = parseInt(req.headers.get('Content-Length') ?? '0', 10);
+      if (contentLength > MAX_BODY) {
+        return json({ error: 'Request body too large' }, 413);
+      }
+
+      let body: { prompt?: string; messages?: Array<{ role: string; content: string }>; stream?: boolean };
+      try {
+        body = await req.json();
+      } catch {
+        return json({ error: 'Invalid JSON' }, 400);
+      }
+
+      const { prompt, messages = [], stream = false } = body;
+      const input = messages.length > 0 ? messages : prompt;
+
+      if (!input) {
+        return json({ error: 'Provide "prompt" (string) or "messages" (array)' }, 400);
+      }
+
+      // ── Streaming (SSE) ───────────────────────────────────────
+
+      if (stream) {
+        const encoder = new TextEncoder();
+        const readable = new ReadableStream({
+          async start(controller) {
+            try {
+              const result = await runAgentWithRetry(config, input, {
+                onEvent: (event: AgentEvent) => {
+                  if (event.type === 'text') {
+                    const data = JSON.stringify({ type: 'text', content: event.delta });
+                    controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                  }
+                },
+              });
+              const done = JSON.stringify({ type: 'done', usage: result.usage });
+              controller.enqueue(encoder.encode(`data: ${done}\n\n`));
+            } catch (err: any) {
+              const error = JSON.stringify({ type: 'error', message: err.message });
+              controller.enqueue(encoder.encode(`data: ${error}\n\n`));
+            } finally {
+              controller.close();
+            }
+          },
+        });
+
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            ...corsHeaders(),
+          },
+        });
+      }
+
+      // ── Non-streaming ─────────────────────────────────────────
+
+      try {
+        const result = await runAgentWithRetry(config, input);
+        return json({ text: result.text, usage: result.usage });
+      } catch (err: any) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    return json({ error: 'Not found' }, 404);
+  },
+});
+
+console.log(`Agent server listening on http://localhost:${PORT}`);
 ```
 
 ### Usage
@@ -156,16 +490,46 @@ Expose the agent as an MCP tool so other agents (including Claude Code) can call
 ### src/mcp-server.ts
 
 ```python
-from dataclasses import dataclass
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
+import { loadConfig } from './config.js';
+import { runAgentWithRetry } from './agent.js';
 
-@dataclass
-class RunAgentRequest:
-    prompt: str
-    model: str | None = None
+const config = loadConfig();
 
-def run_agent_tool(request: RunAgentRequest) -> dict:
-    selected_model = request.model or "openrouter/auto"
-    return {"model": selected_model, "output": f"Processed: {request.prompt}"}
+const server = new McpServer({
+  name: config.name ?? 'headless-agent',
+  version: '1.0.0',
+});
+
+server.tool(
+  'run_agent',
+  'Send a prompt to the agent and get a text response',
+  {
+    prompt: z.string().describe('The prompt to send to the agent'),
+    model: z.string().optional().describe('Override the model (e.g. anthropic/claude-sonnet-4)'),
+  },
+  async ({ prompt, model }) => {
+    const runConfig = { ...config };
+    if (model) runConfig.model = model;
+
+    try {
+      const result = await runAgentWithRetry(runConfig, prompt);
+      return {
+        content: [{ type: 'text' as const, text: result.text }],
+      };
+    } catch (err: any) {
+      return {
+        content: [{ type: 'text' as const, text: `Error: ${err.message}` }],
+        isError: true,
+      };
+    }
+  },
+);
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
 ```
 
 ### Dependencies

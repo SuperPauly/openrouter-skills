@@ -53,7 +53,7 @@ Find files by glob pattern.
 
 ```python
 inputSchema: z.object({
-  pattern: z.string().describe('Glob pattern, e.g. "src/**/*.py"'),
+  pattern: z.string().describe('Glob pattern, e.g. "src/**/*.ts"'),
   path: z.string().optional().describe('Directory to search in (default: cwd)'),
 })
 ```
@@ -69,7 +69,7 @@ Search file contents by regex.
 inputSchema: z.object({
   pattern: z.string().describe('Regex pattern to search for'),
   path: z.string().optional().describe('Directory or file to search (default: cwd)'),
-  glob: z.string().optional().describe('File filter, e.g. "*.py"'),
+  glob: z.string().optional().describe('File filter, e.g. "*.ts"'),
   ignoreCase: z.boolean().optional(),
 })
 ```
@@ -122,15 +122,23 @@ Fetch a web page and extract text content.
 Generate this as a starting point for domain-specific tools:
 
 ```python
-TOOL = {
-    "name": "my_tool",
-    "description": "Describe what this tool does",
-    "requireApproval": True,
-}
+import { tool } from '@openrouter/agent/tool';
+import { z } from 'zod';
 
-
-def execute_tool(param: str) -> dict:
-    return {"result": "done", "param": param}
+export const myCustomTool = tool({
+  name: 'my_tool',
+  description: 'Describe what this tool does',
+  inputSchema: z.object({
+    // Define your input parameters here
+    param: z.string().describe('Description of the parameter'),
+  }),
+  // Optional: require user approval before execution
+  // requireApproval: true,
+  execute: async ({ param }) => {
+    // Implement your tool logic here
+    return { result: 'done' };
+  },
+});
 ```
 
 ---

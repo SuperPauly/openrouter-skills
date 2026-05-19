@@ -263,13 +263,19 @@ print()
 ### Defining Tools
 
 ```python
-def get_weather(city: str) -> str:
-    return f"Weather for {city}: 21C and clear"
-
-TOOLS = [{
+weather_tool = {
+    "type": "function",
     "name": "get_weather",
-    "description": "Return current weather for a city",
-}]
+    "description": "Get current weather for a location",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "location": {"type": "string", "description": "City name"},
+            "units": {"type": "string", "enum": ["celsius", "fahrenheit"], "default": "celsius"},
+        },
+        "required": ["location"],
+    },
+}
 ```
 
 ### Using Tools with the Responses API
@@ -598,16 +604,82 @@ resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json={
 ## Complete Working Example
 
 ```python
-import os
 import requests
+import json
+import os
 
-def run_example(prompt: str) -> str:
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}"},
-        json={"model": "openai/gpt-4o-mini", "messages": [{"role": "user", "content": prompt}]},
-        timeout=30,
-    )
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+BASE_URL = "https://openrouter.ai/api/v1"
+HEADERS = {
+    "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
+    "Content-Type": "application/json",
+}
+
+calculator_tool = {
+    "type": "function",
+    "name": "calculate",
+    "description": "Evaluate a mathematical expression",
+    "parameters": {
+        "type": "object",
+        "properties": {"expression": {"type": "string"}},
+        "required": ["expression"],
+    },
+}
+
+
+def execute_tool(name: str, args: dict) -> str:
+    if name == "calculate":
+        try:
+            return str(eval(args["expression"]))
+        except Exception as e:
+            return f"Error: {e}"
+    return f"Unknown tool: {name}"
+
+
+def run_agent(prompt: str, max_steps: int = 5) -> str:
+    input_items = [{"role": "user", "content": prompt}]
+    previous_id = None
+    accumulated_text = ""
+
+    for _ in range(max_steps):
+        payload = {
+            "model": "openai/gpt-5-nano",
+            "tools": [calculator_tool],
+            "input": input_items,
+        }
+        if previous_id:
+            payload["previous_response_id"] = previous_id
+
+        resp = requests.post(f"{BASE_URL}/responses", headers=HEADERS, json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        previous_id = data["id"]
+
+        tool_calls = []
+        for item in data.get("output", []):
+            if item.get("type") == "message":
+                for part in item.get("content", []):
+                    if part.get("type") == "output_text":
+                        accumulated_text += part["text"]
+            elif item.get("type") == "function_call":
+                tool_calls.append(item)
+
+        if not tool_calls:
+            break
+
+        input_items = []
+        for tc in tool_calls:
+            args = json.loads(tc["arguments"])
+            result = execute_tool(tc["name"], args)
+            input_items.append({
+                "type": "function_call_output",
+                "call_id": tc["call_id"],
+                "output": result,
+            })
+
+    return accumulated_text
+
+
+if __name__ == "__main__":
+    answer = run_agent("What is 15 * 7 + 42?")
+    print(answer)
 ```

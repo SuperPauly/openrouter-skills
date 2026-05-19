@@ -51,7 +51,7 @@ Find files by glob pattern.
 
 ```python
 inputSchema: z.object({
-  pattern: z.string().describe('Glob pattern, e.g. "src/**/*.py"'),
+  pattern: z.string().describe('Glob pattern, e.g. "src/**/*.ts"'),
   path: z.string().optional().describe('Directory to search in (default: cwd)'),
 })
 ```
@@ -67,7 +67,7 @@ Search file contents by regex.
 inputSchema: z.object({
   pattern: z.string().describe('Regex pattern to search for'),
   path: z.string().optional().describe('Directory or file to search (default: cwd)'),
-  glob: z.string().optional().describe('File filter, e.g. "*.py"'),
+  glob: z.string().optional().describe('File filter, e.g. "*.ts"'),
   ignoreCase: z.boolean().optional(),
 })
 ```
@@ -108,15 +108,23 @@ inputSchema: z.object({
 Generate this as a starting point for domain-specific tools:
 
 ```python
-TOOL = {
-    "name": "my_tool",
-    "description": "Describe what this tool does",
-    "requireApproval": True,
-}
+import { tool } from '@openrouter/agent/tool';
+import { z } from 'zod';
 
-
-def execute_tool(param: str) -> dict:
-    return {"result": "done", "param": param}
+export const myCustomTool = tool({
+  name: 'my_tool',
+  description: 'Describe what this tool does',
+  inputSchema: z.object({
+    // Define your input parameters here
+    param: z.string().describe('Description of the parameter'),
+  }),
+  // Optional: require user approval before execution
+  // requireApproval: true,
+  execute: async ({ param }) => {
+    // Implement your tool logic here
+    return { result: 'done' };
+  },
+});
 ```
 
 ---
@@ -137,11 +145,11 @@ Persistent Python REPL with top-level await.
 Spawn a child agent to handle a delegated task.
 
 ```python
-INPUT_SCHEMA = {
-    "task": "Short name for the task",
-    "message": "Detailed instructions for the sub-agent",
-    "model": "Optional model override",
-}
+inputSchema: z.object({
+  task: z.string().describe('Short name for the task'),
+  message: z.string().describe('Detailed instructions for the sub-agent'),
+  model: z.string().optional().describe('Model override for the sub-agent'),
+})
 ```
 
 - **Behavior**: Create a new `OpenRouter` client, call `callModel` with the message and a subset of tools. Return the sub-agent's final text response.
@@ -153,11 +161,12 @@ INPUT_SCHEMA = {
 Track multi-step task progress.
 
 ```python
-PLAN_SCHEMA = {
-    "items": [
-        {"step": "Description of the step", "status": "pending"}
-    ]
-}
+inputSchema: z.object({
+  items: z.array(z.object({
+    step: z.string().describe('Description of the step'),
+    status: z.enum(['pending', 'in_progress', 'completed']),
+  })),
+})
 ```
 
 - **Behavior**: Store the plan in memory (or a file). Validate that at most one item is `in_progress`. Return the updated plan. The model calls this tool to update progress as it works.

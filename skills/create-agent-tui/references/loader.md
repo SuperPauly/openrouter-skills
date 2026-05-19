@@ -3,9 +3,9 @@
 Three loader animations are available, configured via `config.display.loader`. The default is `gradient` with text `"Working"`.
 
 ```python
-SPINNERS = {
-    "dots": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
-    "line": ["-", "\\", "|", "/"],
+export interface LoaderConfig {
+  text: string;
+  style: 'gradient' | 'spinner' | 'minimal';
 }
 ```
 
@@ -20,11 +20,74 @@ SPINNERS = {
 ## src/loader.ts
 
 ```python
-import itertools
+import type { LoaderConfig } from './config.js';
 
-def loader_frames(style: str = "dots") -> itertools.cycle:
-    styles = {"dots": ["⠋", "⠙", "⠹"], "line": ["-", "\\", "|", "/"]}
-    return itertools.cycle(styles.get(style, styles["dots"]))
+const DIM = '\x1b[2m';
+const RESET = '\x1b[0m';
+
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+const GRADIENT_COLORS = [
+  '\x1b[38;5;240m',
+  '\x1b[38;5;245m',
+  '\x1b[38;5;250m',
+  '\x1b[38;5;255m',
+  '\x1b[38;5;250m',
+  '\x1b[38;5;245m',
+];
+
+export class Loader {
+  private config: LoaderConfig;
+  private frame = 0;
+  private interval: ReturnType<typeof setInterval> | null = null;
+
+  constructor(config: LoaderConfig) {
+    this.config = config;
+  }
+
+  start(): void {
+    this.frame = 0;
+    const ms = this.config.style === 'gradient' ? 150 : this.config.style === 'spinner' ? 80 : 300;
+    this.interval = setInterval(() => this.draw(), ms);
+  }
+
+  stop(): void {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+      process.stdout.write('\r\x1b[K');
+    }
+  }
+
+  private draw(): void {
+    const { text, style } = this.config;
+    this.frame++;
+
+    switch (style) {
+      case 'minimal': {
+        const dots = ['·', '··', '···'];
+        process.stdout.write(`\r${DIM}${text}${dots[this.frame % 3]}${RESET}`);
+        break;
+      }
+      case 'spinner': {
+        const char = SPINNER_FRAMES[this.frame % SPINNER_FRAMES.length];
+        process.stdout.write(`\r${DIM}${char} ${text}${RESET}`);
+        break;
+      }
+      case 'gradient': {
+        const len = GRADIENT_COLORS.length;
+        let out = '\r';
+        for (let i = 0; i < text.length; i++) {
+          const ci = (this.frame + i) % len;
+          out += GRADIENT_COLORS[ci] + text[i];
+        }
+        out += RESET;
+        process.stdout.write(out);
+        break;
+      }
+    }
+  }
+}
 ```
 
 ---
@@ -32,10 +95,24 @@ def loader_frames(style: str = "dots") -> itertools.cycle:
 ## Wire into cli.ts
 
 ```python
-def integrate_components(config: dict) -> dict:
-    model = config.get("model", "openrouter/auto")
-    timeout = int(config.get("timeout", 30))
-    return {"model": model, "timeout": timeout, "ready": True}
+import { Loader } from './loader.js';
+
+// Before the agent call — show loader + a preview input box below it:
+const loader = new Loader(config.display.loader);
+loader.start();
+showPreviewInput(); // draw a non-interactive input box below the loader
+
+// On first event (text or tool_call) — clear preview, stop loader:
+clearPreviewInput();
+loader.stop();
+
+// After tool_result (agent pauses between turns) — restart loader + preview:
+loader.start();
+showPreviewInput();
+
+// After response or on error:
+clearPreviewInput();
+loader.stop();
 ```
 
 The preview input box is a visual-only rendering of the input prompt below the loader line. It shows the user where their next prompt will go. When agent events arrive, the preview is erased and replaced with actual output. After the agent finishes, the real interactive input box appears.
